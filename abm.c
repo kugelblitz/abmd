@@ -166,9 +166,19 @@ DOUBLE *get_delayed_states(int i, DOUBLE *ts, DOUBLE *sol, DOUBLE h, int interpo
 }
 
 
-DOUBLE *abm(void (*f)(DOUBLE, DOUBLE[], void*, DOUBLE*), DOUBLE t0, DOUBLE t1, DOUBLE h,
+DOUBLE *abm(void (*f)(DOUBLE t, DOUBLE states[], void *context, DOUBLE *out), DOUBLE t0, DOUBLE t1, DOUBLE h,
             DOUBLE init[], DOUBLE delays[], int dim, int delays_number, void *context) {
-
+/*  Integrates the DDE system given by `f` using Adams—Bashforth—Moulton method of order `ABM_ORDER`.
+ *
+ *  Integration is performed from `t0` to `t1` with constant step `h`,
+ *  `init` being an array of length `dim` containing the system's state at `t0`.
+ *
+ *  f arguments:
+ *      t - point in time (variable which is being integrated with respect to);
+ *      states - array of length `dim * delays_number` storing system states corresponding to `delays`;
+ *      context - argument being passed to `f` through the `abm` function;
+ *      out - function output (`dim` number of DOUBLEs).
+ */
     FContext fcontext;
     fcontext.call = f;
     fcontext.context = context;
