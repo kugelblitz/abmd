@@ -202,10 +202,10 @@ DOUBLE *abm(void (*f)(DOUBLE, DOUBLE[], void*, DOUBLE*), DOUBLE t0, DOUBLE t1, D
                       (int)(max_positive_delay / h) + 1 : (int)(max_positive_delay / h);
 
     extra_steps += interpolation_order - 1;
-    printf("Max positive delay: %Lf\n", max_positive_delay);
-    printf("Extra steps: %d\n", extra_steps);
+//    printf("Max positive delay: %Lf\n", max_positive_delay);
+//    printf("Extra steps: %d\n", extra_steps);
     DOUBLE rk4_t1 = t0 + (ABM_ORDER - 1 + extra_steps) * h;
-    printf("rk4_t1: %Lf\n", rk4_t1);
+//    printf("rk4_t1: %Lf\n", rk4_t1);
     DOUBLE rk4_h = h / (DOUBLE)RK_STEPS_IN_ABM;
     int rk4_n = (int)(1 + (rk4_t1 - t0) / rk4_h);
 
@@ -238,7 +238,6 @@ DOUBLE *abm(void (*f)(DOUBLE, DOUBLE[], void*, DOUBLE*), DOUBLE t0, DOUBLE t1, D
 
     // Initializing right-hand sides
     for (int i = extra_steps; i < k; i++) {
-//        printf("Initializing rhs %d\n", i);
         DOUBLE *states = get_delayed_states(i, ts, sol, h, interpolation_order, extrapolation_order,
                                             delays, dim, delays_number);
         f(ts[i], states, context, &rhss[i * dim]);
