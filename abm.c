@@ -8,7 +8,7 @@
 #include "plot.h"
 
 
-int ABM_ORDER = 11;
+#define ABM_ORDER 11
 
 
 typedef struct {
@@ -277,6 +277,8 @@ DOUBLE *abm(void (*f)(DOUBLE t, DOUBLE states[], void *context, DOUBLE *out), DO
     return sol;
 }
 
+#ifdef DEBUG
+
 void calc_difference(void f(DOUBLE, DOUBLE*, void*, DOUBLE*)) {
     DOUBLE init[] = {-3844e5, 0, 0, 1023};
     DOUBLE t0 = 0;
@@ -319,3 +321,5 @@ void calc_difference(void f(DOUBLE, DOUBLE*, void*, DOUBLE*)) {
     free(sol_back);
     free(diff);
 }
+
+#endif
