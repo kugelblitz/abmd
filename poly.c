@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <assert.h>
 
 #include "type.h"
 
@@ -57,6 +56,7 @@ void compute_q(DOUBLE *xs, int n, DOUBLE *out) {
     free(qdash);
 }
 
+/*
 DOUBLE evaluate_2d(DOUBLE *cs, DOUBLE x, int n) {
     DOUBLE res = 0;
     for (int i = 0; i < n; i++) {
@@ -91,7 +91,6 @@ void lagrange_cs_2d(DOUBLE xs[], DOUBLE ys[], int n, DOUBLE *out) {
     }
     free(data);
 }
-
 void lagrange_cs(DOUBLE *xs, DOUBLE *ys, int dim, int n, DOUBLE *out) {
     DOUBLE *ysi = malloc(sizeof(DOUBLE) * n);
     for (int i = 0; i < dim; i++) {
@@ -131,3 +130,5 @@ void test() {
     free(y);
     free(cs);
 }
+
+*/
