@@ -23,6 +23,16 @@ typedef struct {
   Queue *queue;
 } ABMData;
 
+void destroy_abm_data(ABMData abm_data) {
+  free(abm_data.predictor_coeffs);
+  free(abm_data.corrector_coeffs);
+  free(abm_data.interp_xs);
+  free(abm_data.interp_ys);
+  free(abm_data.extrap_xs);
+  free(abm_data.extrap_ys);
+  free(abm_data.rhs_temp);
+  destroy_queue(abm_data.queue);
+}
 
 void predict(ABMData *abm_data) {
 
@@ -275,9 +285,8 @@ void run_abm(ABM *abm) {
     abm->init_call(init, abm->context);
   }
 
-  DOUBLE *coeffs = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * abm_order);
-  DOUBLE *predictor_coeffs = &coeffs[0];
-  DOUBLE *corrector_coeffs = &coeffs[abm_order];
+  DOUBLE *predictor_coeffs = (DOUBLE *) malloc(sizeof(DOUBLE) * abm_order);
+  DOUBLE *corrector_coeffs = (DOUBLE *) malloc(sizeof(DOUBLE) * abm_order);
   get_predictor_coeffs(abm_order, predictor_coeffs);
   get_corrector_coeffs(abm_order, corrector_coeffs);
 
@@ -333,6 +342,7 @@ void run_abm(ABM *abm) {
   for (int i = 0; i < dim; i++) {
     rk4_sol[i] = init[i];
   }
+  free(init);
 
   // Doing rk4_n RK4 steps
   for (int i = 1; i < rk4_n; i++) {
@@ -404,9 +414,7 @@ void run_abm(ABM *abm) {
     abm->final_state[i] = (double) peek_right(queue)[i];
   }
 
-  destroy_queue(queue);
-  free(coeffs);
-  free(init);
+  destroy_abm_data(abm_data);
   free(callback_state);
   free(callback_state_l);
 }
