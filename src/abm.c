@@ -201,13 +201,13 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last, DOUBLE *out) 
     int left_i = right_i - points_number + 1;
     double right_t = t_last + h * (int) steps_diff;
     double left_t = right_t - (points_number - 1) * h;
-//        This was supposed to improve interpolation precision, but only seems
-//            to make it worse. More over, it cannot easily be used in current
-//            function, so I'll just leave it like that for now.
-//        if (delay > h) {
-//            left_i += 1;
-//            left_t += h;
-//        }
+//    This was supposed to improve interpolation precision, but only seems
+//        to make it worse. More over, it cannot easily be used in current
+//        function, so I'll just leave it like that for now.
+//    if (delay > h) {
+//        left_i += 1;
+//        left_t += h;
+//    }
     if (abm_data->interp_xs == NULL) {
       abm_data->interp_xs = malloc(sizeof(double) * points_number);
       abm_data->interp_ys = malloc(sizeof(DOUBLE) * points_number * dim);
