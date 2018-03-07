@@ -18,6 +18,7 @@ typedef struct _ABM ABM;
 void run_abm(ABM *);
 ABM *create_abm(void (*f)(double, DOUBLE[], void*, DOUBLE*), int dim,
                 double t0, double t1, double h, double *init);
+void destroy_abm(ABM *abm);
 void set_abm_order(ABM *abm, int order);
 void set_delays(ABM *abm, double *delays, int ndelays);
 void set_interpolation_order(ABM *abm, int order);

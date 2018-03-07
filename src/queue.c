@@ -21,6 +21,11 @@ Queue *create_queue(int capacity, int block_size) {
   return queue;
 }
 
+void destroy_queue(Queue *queue) {
+  free(queue->array);
+  free(queue);
+}
+
 int is_full(Queue *q) {
   return q->size == q->capacity;
 }

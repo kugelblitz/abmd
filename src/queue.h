@@ -6,6 +6,7 @@
 typedef struct _Queue Queue;
 
 Queue *create_queue(int capacity, int block_size);
+void destroy_queue(Queue *queue);
 int is_full(Queue *q);
 int is_empty(Queue *q);
 int get_capacity(Queue *q);

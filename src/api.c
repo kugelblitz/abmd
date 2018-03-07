@@ -31,6 +31,11 @@ ABM *create_abm(void (*f)(double, DOUBLE[], void*, DOUBLE*), int dim,
   return abm;
 }
 
+void destroy_abm(ABM *abm) {
+  free(abm->final_state);
+  free(abm);
+}
+
 void set_abm_order(ABM *abm, int order) {
   abm->abm_order = order;
 }

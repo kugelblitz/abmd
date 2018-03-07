@@ -60,6 +60,7 @@ void calc_difference(void (*f)(double, DOUBLE*, void*, DOUBLE*)) {
   set_context(abm, &abm_test);
 
   run_abm(abm);
+  destroy_abm(abm);
   double *sol_reversed = malloc(sizeof(double) * n * dim);
 
   for (int i = 0; i < n; i++) {
@@ -67,8 +68,6 @@ void calc_difference(void (*f)(double, DOUBLE*, void*, DOUBLE*)) {
     sol_reversed[i * dim + 1] *= -1;
     sol_reversed[i * dim + 3] *= -1;
   }
-
-  free(abm);
 
   abm = create_abm(f, dim, t1, t0, h, &sol[(n - 1) * dim]);
   set_delays(abm, (double[]){0, delay}, 2);
@@ -78,6 +77,7 @@ void calc_difference(void (*f)(double, DOUBLE*, void*, DOUBLE*)) {
   abm_test.i = 0;
 
   run_abm(abm);
+  destroy_abm(abm);
   double *diff = malloc(sizeof(double) * 2 * n);
 
   for (int i = 0; i < n; i++) {

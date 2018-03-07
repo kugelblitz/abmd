@@ -388,6 +388,7 @@ void run_abm(ABM *abm) {
     abm->final_state[i] = (double) peek_right(queue)[i];
   }
 
+  destroy_queue(queue);
   free(coeffs);
   free(init);
   free(callback_state);
