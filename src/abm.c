@@ -244,19 +244,17 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last, DOUBLE *out) 
   lagrange(t, xs, ys, dim, points_number, out);
 }
 
-DOUBLE *get_delayed_states(double ti, double t_last, ABMData *abm_data) {
-
+void get_delayed_states(ABMData *abm_data, double ti, double t_last,
+                        DOUBLE *out) {
   int dim = abm_data->input->dim;
   int ndelays = abm_data->input->ndelays;
   double *delays = abm_data->input->delays;
 
-  DOUBLE *states = malloc(sizeof(DOUBLE) * dim * ndelays);
   for (int j = 0; j < ndelays; j++) {
     double delay = delays[j];
     double t_delayed = ti - delay;
-    get_state_at_time(abm_data, t_delayed, t_last, &states[j * dim]);
+    get_state_at_time(abm_data, t_delayed, t_last, &out[j * dim]);
   }
-  return states;
 }
 
 void run_abm(ABM *abm) {
@@ -321,6 +319,7 @@ void run_abm(ABM *abm) {
 
   DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk4_n * dim);
   DOUBLE *rhs_temp = malloc(sizeof(DOUBLE) * 2 * dim);
+  DOUBLE *states = malloc(sizeof(DOUBLE) * dim * ndelays);
 
   int queue_size = (int) ceil(rk4_n / (double) RK_STEPS_IN_ABM);
   Queue *queue = create_queue(queue_size, 2 * dim);
@@ -375,10 +374,9 @@ void run_abm(ABM *abm) {
 
   // Initializing right-hand sides
   for (int i = extra_steps; i < k; i++) {
-    DOUBLE *states = get_delayed_states(t0 + i * h, rk4_t1, &abm_data);
+    get_delayed_states(&abm_data, t0 + i * h, rk4_t1, states);
     DOUBLE *address = &get(queue, i)[dim];
     rhs(t0 + i * h, states, &abm_data, address);
-    free(states);
   }
 
   // If ABM_ORDER = 2: rk4_t1 = 2000, t = 4000
@@ -388,16 +386,12 @@ void run_abm(ABM *abm) {
 
     predict(&abm_data);
     DOUBLE *rhs_out = &peek_right(queue)[dim];
-    DOUBLE *states = get_delayed_states(t, t, &abm_data);
+    get_delayed_states(&abm_data, t, t, states);
     rhs(t, states, &abm_data, rhs_out);
-
-    free(states);
 
     correct(&abm_data);
-    states = get_delayed_states(t, t, &abm_data);
+    get_delayed_states(&abm_data, t, t, states);
     rhs(t, states, &abm_data, rhs_out);
-
-    free(states);
 
     if (run_callback) {
       if ((t - h) * hsgn < *callback_t * hsgn  && *callback_t * hsgn <= t * hsgn) {
@@ -415,6 +409,7 @@ void run_abm(ABM *abm) {
   }
 
   destroy_abm_data(abm_data);
+  free(states);
   free(callback_state);
   free(callback_state_l);
 }
