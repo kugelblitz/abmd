@@ -263,16 +263,12 @@ void run_abm(ABM *abm) {
   int abm_order = abm->abm_order;
   double t0 = abm->t0;
   double t1 = abm->t1;
-  double h = abm->h;
   double *delays = abm->delays;
   int ndelays = abm->ndelays;
 
-  if (t1 < t0) {
-    h = -h;
-    abm->h = h;
-  }
-
-  int hsgn = (h > 0) - (h < 0);
+  int hsgn = (t1 > t0) - (t1 < t0);
+  abm->h *= hsgn;
+  double h = abm->h;
 
   DOUBLE *init = malloc(sizeof(DOUBLE) * dim);
   for (int i = 0; i < dim; i++) {
