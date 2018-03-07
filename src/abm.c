@@ -14,6 +14,10 @@ typedef struct {
   ABM *input;
   DOUBLE *predictor_coeffs;
   DOUBLE *corrector_coeffs;
+  double *interp_xs;
+  DOUBLE *interp_ys;
+  double *extrap_xs;
+  DOUBLE *extrap_ys;
   double rk4_h;
   DOUBLE *rhs_temp;
   Queue *queue;
@@ -194,8 +198,12 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last, DOUBLE *out) 
 //            left_i += 1;
 //            left_t += h;
 //        }
-    double *xs = malloc(sizeof(double) * points_number);
-    DOUBLE *ys = malloc(sizeof(DOUBLE) * points_number * dim);
+    if (abm_data->interp_xs == NULL) {
+      abm_data->interp_xs = malloc(sizeof(double) * points_number);
+      abm_data->interp_ys = malloc(sizeof(DOUBLE) * points_number * dim);
+    }
+    double *xs = abm_data->interp_xs;
+    DOUBLE *ys = abm_data->interp_ys;
     for (int ii = 0; ii < points_number; ii++) {
       xs[ii] = left_t + ii * h;
       DOUBLE *sol = get(queue, left_i + ii);
@@ -210,8 +218,12 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last, DOUBLE *out) 
   int points_number = abm_data->input->extrapolation_order + 1;
   int left_i = q_size - points_number;
   double left_t = t_last - (points_number - 1) * h;
-  double *xs = malloc(sizeof(double) * points_number);
-  DOUBLE *ys = malloc(sizeof(DOUBLE) * points_number * dim);
+  if (abm_data->extrap_xs == NULL) {
+    abm_data->extrap_xs = malloc(sizeof(double) * points_number);
+    abm_data->extrap_ys = malloc(sizeof(DOUBLE) * points_number * dim);
+  }
+  double *xs = abm_data->extrap_xs;
+  DOUBLE *ys = abm_data->extrap_ys;
   for (int ii = 0; ii < points_number; ii++) {
     xs[ii] = left_t + ii * h;
     DOUBLE *sol = get(queue, left_i + ii);
@@ -308,6 +320,10 @@ void run_abm(ABM *abm) {
           .input=abm,
           .predictor_coeffs=predictor_coeffs,
           .corrector_coeffs=corrector_coeffs,
+          .interp_xs=NULL,
+          .interp_ys=NULL,
+          .extrap_xs=NULL,
+          .extrap_ys=NULL,
           .rk4_h=rk4_h,
           .rhs_temp=rhs_temp,
           .queue=queue
