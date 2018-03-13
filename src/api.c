@@ -5,7 +5,7 @@
 
 #define ABM_ORDER 11
 
-ABM *create_abm(void (*f)(double, DOUBLE[], void*, DOUBLE*), int dim,
+ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
                 double t0, double t1, double h, double *init) {
   ABM *abm = (ABM *) malloc(sizeof(ABM));
   double *final_state = (double *) malloc(sizeof(double) * dim);
@@ -53,7 +53,7 @@ void set_extrapolation_order(ABM *abm, int order) {
   abm->extrapolation_order = order;
 }
 
-void set_f2(ABM *abm, void (*f2)(double, DOUBLE[], void*, DOUBLE*)) {
+void set_f2(ABM *abm, void (*f2)(DOUBLE *, double, DOUBLE *, void *)) {
   abm->f2 = f2;
 }
 

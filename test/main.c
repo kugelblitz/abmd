@@ -32,7 +32,7 @@ int callback_back(double *t, double *state, void *context) {
   return 1;
 }
 
-void calc_difference(void (*f)(double, DOUBLE*, void*, DOUBLE*)) {
+void calc_difference(void (*f)(DOUBLE *, double, DOUBLE *, void *)) {
   int order = 11;
   double init[] = {-3844e5, 0, 0, 1023};
   double t0 = 0;
@@ -96,7 +96,7 @@ void calc_difference(void (*f)(double, DOUBLE*, void*, DOUBLE*)) {
   free(diff);
 }
 
-void orbit(double t, DOUBLE states[], void *context, DOUBLE *out) {
+void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
   int dim = 4;
   const DOUBLE G = 6.67408e-11;
   const double m1 = 5.972e24;

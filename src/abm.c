@@ -86,7 +86,7 @@ void multiply_vector(DOUBLE *vec, DOUBLE c, int dim) {
   }
 }
 
-void rk4_step(void (*f)(double, DOUBLE[], void*, DOUBLE*), double h, double t,
+void rk4_step(void (*f)(DOUBLE *, double, DOUBLE *, void *), double h, double t,
               DOUBLE *state, int dim, int ndelays, void *context, DOUBLE *out) {
 
   DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) * 4 * dim * (1 + ndelays));
@@ -106,7 +106,7 @@ void rk4_step(void (*f)(double, DOUBLE[], void*, DOUBLE*), double h, double t,
   for (int i = 0; i < ndelays; i++) {
     memcpy(&in1[i * dim], state, dim * sizeof(DOUBLE));
   }
-  f(t, in1, context, k1);
+  f(in1, t, k1, context);
   multiply_vector(k1, h, dim);
 
   for (int i = 0; i < ndelays; i++) {
@@ -114,7 +114,7 @@ void rk4_step(void (*f)(double, DOUBLE[], void*, DOUBLE*), double h, double t,
       in2[i * dim + j] = state[j] + k1[j] / 2;
     }
   }
-  f(t + h / 2, in2, context, k2);
+  f(in2, t + h / 2, k2, context);
   multiply_vector(k2, h, dim);
 
   for (int i = 0; i < ndelays; i++) {
@@ -122,7 +122,7 @@ void rk4_step(void (*f)(double, DOUBLE[], void*, DOUBLE*), double h, double t,
       in3[i * dim + j] = state[j] + k2[j] / 2;
     }
   }
-  f(t + h / 2, in3, context, k3);
+  f(in3, t + h / 2, k3, context);
   multiply_vector(k3, h, dim);
 
   for (int i = 0; i < ndelays; i++) {
@@ -130,7 +130,7 @@ void rk4_step(void (*f)(double, DOUBLE[], void*, DOUBLE*), double h, double t,
       in4[i * dim + j] = state[j] + k3[j];
     }
   }
-  f(t + h, in4, context, k4);
+  f(in4, t + h, k4, context);
   multiply_vector(k4, h, dim);
 
   for (int i = 0; i < dim; i++) {
@@ -139,7 +139,7 @@ void rk4_step(void (*f)(double, DOUBLE[], void*, DOUBLE*), double h, double t,
   free(data);
 }
 
-void rhs(double t, DOUBLE states[], void *abm_data, DOUBLE *out) {
+void rhs(DOUBLE states[], double t, DOUBLE *out, void *abm_data) {
 
   ABMData *data = (ABMData *)abm_data;
   int dim = data->input->dim;
@@ -151,17 +151,17 @@ void rhs(double t, DOUBLE states[], void *abm_data, DOUBLE *out) {
   DOUBLE *out2 = &temp[dim];
 
   if (data->input->f1 != NULL) {
-    data->input->f1(t, states, data->input->context, out1);
+    data->input->f1(states, t, out1, data->input->context);
   }
   if (data->input->f2 != NULL) {
-    data->input->f2(t, states, data->input->context, out2);
+    data->input->f2(states, t, out2, data->input->context);
   }
   for (int i = 0; i < dim; i++) {
     out[i] = out1[i] + out2[i];
   }
 }
 
-void rhs_rk4(double t, DOUBLE *state, void *abm_data, DOUBLE *out) {
+void rhs_rk4(DOUBLE *state, double t, DOUBLE *out, void *abm_data) {
 
   ABMData *data = (ABMData *)abm_data;
   int dim = data->input->dim;
@@ -176,7 +176,7 @@ void rhs_rk4(double t, DOUBLE *state, void *abm_data, DOUBLE *out) {
     rk4_step(rhs, -delay, t, state, dim, ndelays,
          data, &states[i * dim]);
   }
-  rhs(t, states, data, out);
+  rhs(states, t, out, data);
   free(states);
 }
 
@@ -374,7 +374,7 @@ void run_abm(ABM *abm) {
   for (int i = extra_steps; i < k; i++) {
     get_delayed_states(&abm_data, t0 + i * h, rk4_t1, states);
     DOUBLE *address = &get(queue, i)[dim];
-    rhs(t0 + i * h, states, &abm_data, address);
+    rhs(states, t0 + i * h, address, &abm_data);
   }
 
   // If ABM_ORDER = 2: rk4_t1 = 2000, t = 4000
@@ -385,11 +385,11 @@ void run_abm(ABM *abm) {
     predict(&abm_data);
     DOUBLE *rhs_out = &peek_right(queue)[dim];
     get_delayed_states(&abm_data, t, t, states);
-    rhs(t, states, &abm_data, rhs_out);
+    rhs(states, t, rhs_out, &abm_data);
 
     correct(&abm_data);
     get_delayed_states(&abm_data, t, t, states);
-    rhs(t, states, &abm_data, rhs_out);
+    rhs(states, t, rhs_out, &abm_data);
 
     if (run_callback) {
       if ((t - h) * hsgn < *callback_t * hsgn  && *callback_t * hsgn <= t * hsgn) {
