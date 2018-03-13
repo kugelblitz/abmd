@@ -89,7 +89,7 @@ void multiply_vector(DOUBLE *vec, DOUBLE c, int dim) {
 void rk4_step(void (*f)(double, DOUBLE[], void*, DOUBLE*), double h, double t,
               DOUBLE *state, int dim, int ndelays, void *context, DOUBLE *out) {
 
-  DOUBLE *data = malloc(sizeof(DOUBLE) * 4 * dim * (1 + ndelays));
+  DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) * 4 * dim * (1 + ndelays));
 
   DOUBLE *ks = data;
   DOUBLE *k1 = ks;
@@ -166,7 +166,7 @@ void rhs_rk4(double t, DOUBLE *state, void *abm_data, DOUBLE *out) {
   ABMData *data = (ABMData *)abm_data;
   int dim = data->input->dim;
   int ndelays = data->input->ndelays;
-  DOUBLE *states = malloc(sizeof(DOUBLE) * ndelays * dim);
+  DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
   for (int i = 0; i < ndelays; i++) {
     double delay = data->input->delays[i];
     if (delay == 0) {
@@ -209,8 +209,9 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last, DOUBLE *out) 
 //        left_t += h;
 //    }
     if (abm_data->interp_xs == NULL) {
-      abm_data->interp_xs = malloc(sizeof(double) * points_number);
-      abm_data->interp_ys = malloc(sizeof(DOUBLE) * points_number * dim);
+      abm_data->interp_xs = (double *) malloc(sizeof(double) * points_number);
+      abm_data->interp_ys = (DOUBLE *) malloc(sizeof(DOUBLE) *
+                                              points_number * dim);
     }
     double *xs = abm_data->interp_xs;
     DOUBLE *ys = abm_data->interp_ys;
@@ -229,8 +230,9 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last, DOUBLE *out) 
   int left_i = q_size - points_number;
   double left_t = t_last - (points_number - 1) * h;
   if (abm_data->extrap_xs == NULL) {
-    abm_data->extrap_xs = malloc(sizeof(double) * points_number);
-    abm_data->extrap_ys = malloc(sizeof(DOUBLE) * points_number * dim);
+    abm_data->extrap_xs = (double *) malloc(sizeof(double) * points_number);
+    abm_data->extrap_ys = (DOUBLE *) malloc(sizeof(DOUBLE) *
+                                            points_number * dim);
   }
   double *xs = abm_data->extrap_xs;
   DOUBLE *ys = abm_data->extrap_ys;
@@ -270,7 +272,7 @@ void run_abm(ABM *abm) {
   abm->h *= hsgn;
   double h = abm->h;
 
-  DOUBLE *init = malloc(sizeof(DOUBLE) * dim);
+  DOUBLE *init = (DOUBLE *) malloc(sizeof(DOUBLE) * dim);
   for (int i = 0; i < dim; i++) {
     init[i] = abm->init[i];
   }
@@ -314,8 +316,8 @@ void run_abm(ABM *abm) {
 
 
   DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk4_n * dim);
-  DOUBLE *rhs_temp = malloc(sizeof(DOUBLE) * 2 * dim);
-  DOUBLE *states = malloc(sizeof(DOUBLE) * dim * ndelays);
+  DOUBLE *rhs_temp = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * dim);
+  DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * dim * ndelays);
 
   int queue_size = (int) ceil(rk4_n / (double) RK_STEPS_IN_ABM);
   Queue *queue = create_queue(queue_size, 2 * dim);
@@ -356,8 +358,8 @@ void run_abm(ABM *abm) {
   free(rk4_sol);
 
   int run_callback = abm->callback && abm->callback_t;
-  double *callback_state = malloc(sizeof(double) * dim);
-  DOUBLE *callback_state_l = malloc(sizeof(DOUBLE) * dim);
+  double *callback_state = (double *) malloc(sizeof(double) * dim);
+  DOUBLE *callback_state_l = (DOUBLE *) malloc(sizeof(DOUBLE) * dim);
   double *callback_t = abm->callback_t;
 
   while (run_callback && *callback_t * hsgn <= rk4_t1 * hsgn) {

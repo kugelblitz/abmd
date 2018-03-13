@@ -28,7 +28,7 @@ DOUBLE _MOULTON_COEFFS[19] = {
 };
 
 DOUBLE *_get_moulton_coeffs(int n) {
-  DOUBLE *cs = malloc(sizeof(DOUBLE) * n);
+  DOUBLE *cs = (DOUBLE *) malloc(sizeof(DOUBLE) * n);
   for (int i = 0; i < n; i++) {
     cs[i] = 0;
   }
@@ -58,7 +58,7 @@ void get_corrector_coeffs(int n, DOUBLE *out) {
   for (int i = 0; i < n; i++) {
     out[i] = 0;
   }
-  DOUBLE *diff = malloc(sizeof(DOUBLE) * n);
+  DOUBLE *diff = (DOUBLE *) malloc(sizeof(DOUBLE) * n);
   for (int i = 0; i < n; i++) {
     _backward_diff(i + 1, n, diff);
     for (int j = 0; j < n; j++) {
@@ -72,7 +72,7 @@ void get_predictor_coeffs(int n, DOUBLE *out) {
   for (int i = 0; i < n; i++) {
     out[i] = 0;
   }
-  DOUBLE *diff = malloc(sizeof(DOUBLE) * n);
+  DOUBLE *diff = (DOUBLE *) malloc(sizeof(DOUBLE) * n);
   for (int i = 0; i < n; i++) {
     DOUBLE c = 0;
     _backward_diff(i + 1, n, diff);

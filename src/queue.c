@@ -12,12 +12,12 @@ struct _Queue {
 };
 
 Queue *create_queue(int capacity, int block_size) {
-  Queue* queue = (Queue *)malloc(sizeof(Queue));
+  Queue* queue = (Queue *) malloc(sizeof(Queue));
   queue->capacity = capacity;
   queue->block_size = block_size;
   queue->head = queue->size = 0;
   queue->tail = block_size * (capacity - 1);
-  queue->array = (DOUBLE *)malloc(capacity * block_size * sizeof(DOUBLE));
+  queue->array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
   return queue;
 }
 

@@ -7,8 +7,8 @@
 
 ABM *create_abm(void (*f)(double, DOUBLE[], void*, DOUBLE*), int dim,
                 double t0, double t1, double h, double *init) {
-  ABM *abm = malloc(sizeof(ABM));
-  double *final_state = malloc(sizeof(double) * dim);
+  ABM *abm = (ABM *) malloc(sizeof(ABM));
+  double *final_state = (double *) malloc(sizeof(double) * dim);
   *abm = (ABM) {
           .f1=f,
           .f2=NULL,
