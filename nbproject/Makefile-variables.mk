@@ -25,16 +25,16 @@ CND_PACKAGE_PATH_Release32=dist/Release32/GNU-Linux/package/libdde.so.tar
 # Release64 configuration
 CND_PLATFORM_Release64=GNU-Linux
 CND_ARTIFACT_DIR_Release64=dist/Release64/GNU-Linux
-CND_ARTIFACT_NAME_Release64=libdde.so
-CND_ARTIFACT_PATH_Release64=dist/Release64/GNU-Linux/libdde.so
+CND_ARTIFACT_NAME_Release64=libdde-double.so
+CND_ARTIFACT_PATH_Release64=dist/Release64/GNU-Linux/libdde-double.so
 CND_PACKAGE_DIR_Release64=dist/Release64/GNU-Linux/package
 CND_PACKAGE_NAME_Release64=libdde.so.tar
 CND_PACKAGE_PATH_Release64=dist/Release64/GNU-Linux/package/libdde.so.tar
 # Release64LongDouble configuration
 CND_PLATFORM_Release64LongDouble=GNU-Linux
 CND_ARTIFACT_DIR_Release64LongDouble=dist/Release64LongDouble/GNU-Linux
-CND_ARTIFACT_NAME_Release64LongDouble=libdde.so
-CND_ARTIFACT_PATH_Release64LongDouble=dist/Release64LongDouble/GNU-Linux/libdde.so
+CND_ARTIFACT_NAME_Release64LongDouble=libdde-longdouble.so
+CND_ARTIFACT_PATH_Release64LongDouble=dist/Release64LongDouble/GNU-Linux/libdde-longdouble.so
 CND_PACKAGE_DIR_Release64LongDouble=dist/Release64LongDouble/GNU-Linux/package
 CND_PACKAGE_NAME_Release64LongDouble=libdde.so.tar
 CND_PACKAGE_PATH_Release64LongDouble=dist/Release64LongDouble/GNU-Linux/package/libdde.so.tar

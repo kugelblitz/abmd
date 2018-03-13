@@ -35,9 +35,11 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/abm.o \
-	${OBJECTDIR}/coeffs.o \
-	${OBJECTDIR}/poly.o
+	${OBJECTDIR}/src/abm.o \
+	${OBJECTDIR}/src/api.o \
+	${OBJECTDIR}/src/coeffs.o \
+	${OBJECTDIR}/src/poly.o \
+	${OBJECTDIR}/src/queue.o
 
 
 # C Compiler Flags
@@ -64,20 +66,30 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde.${CND_DLIB_EXT}: ${OBJECTFILES
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde.${CND_DLIB_EXT} ${OBJECTFILES} ${LDLIBSOPTIONS} -shared -fPIC
 
-${OBJECTDIR}/abm.o: abm.c
-	${MKDIR} -p ${OBJECTDIR}
+${OBJECTDIR}/src/abm.o: src/abm.c
+	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/abm.o abm.c
+	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abm.o src/abm.c
 
-${OBJECTDIR}/coeffs.o: coeffs.c
-	${MKDIR} -p ${OBJECTDIR}
+${OBJECTDIR}/src/api.o: src/api.c
+	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/coeffs.o coeffs.c
+	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/api.o src/api.c
 
-${OBJECTDIR}/poly.o: poly.c
-	${MKDIR} -p ${OBJECTDIR}
+${OBJECTDIR}/src/coeffs.o: src/coeffs.c
+	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/poly.o poly.c
+	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/coeffs.o src/coeffs.c
+
+${OBJECTDIR}/src/poly.o: src/poly.c
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/poly.o src/poly.c
+
+${OBJECTDIR}/src/queue.o: src/queue.c
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/queue.o src/queue.c
 
 # Subprojects
 .build-subprojects:
