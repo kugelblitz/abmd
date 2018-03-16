@@ -391,14 +391,13 @@ void run_abm(ABM *abm) {
     get_delayed_states(&abm_data, t, t, states);
     rhs(states, t, rhs_out, &abm_data);
 
-    if (run_callback) {
-      if ((t - h) * hsgn < *callback_t * hsgn  && *callback_t * hsgn <= t * hsgn) {
-        get_state_at_time(&abm_data, *callback_t, t, callback_state_l);
-        for (int j = 0; j < dim; j++) {
-          callback_state[j] = (double) callback_state_l[j];
-        }
-        run_callback = abm->callback(callback_t, callback_state, abm->context);
+    while (run_callback && (t - h) * hsgn < *callback_t * hsgn
+                        && *callback_t * hsgn <= t * hsgn) {
+      get_state_at_time(&abm_data, *callback_t, t, callback_state_l);
+      for (int j = 0; j < dim; j++) {
+        callback_state[j] = (double) callback_state_l[j];
       }
+      run_callback = abm->callback(callback_t, callback_state, abm->context);
     }
   }
 
