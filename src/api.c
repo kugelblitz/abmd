@@ -8,6 +8,8 @@
 ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
                 double t0, double t1, double h, double *init) {
   ABM *abm = (ABM *) malloc(sizeof(ABM));
+  double *delays = (double *) malloc(sizeof(double));
+  delays[0] = 0;
   double *final_state = (double *) malloc(sizeof(double) * dim);
   *abm = (ABM) {
           .f1=f,
@@ -17,8 +19,9 @@ ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
           .t1=t1,
           .h=h,
           .init=init,
-          .delays=NULL,
-          .ndelays=0,
+          .delays=delays,
+          .ndelays=1,
+          ._user_set_delays=0,
           .abm_order=ABM_ORDER,
           .interpolation_order=4,
           .extrapolation_order=1,
@@ -32,6 +35,9 @@ ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
 }
 
 void destroy_abm(ABM *abm) {
+  if (!abm->_user_set_delays) {
+    free(abm->delays);
+  }
   free(abm->final_state);
   free(abm);
 }
@@ -41,6 +47,8 @@ void set_abm_order(ABM *abm, int order) {
 }
 
 void set_delays(ABM *abm, double *delays, int ndelays) {
+  abm->_user_set_delays = 1;
+  free(abm->delays);
   abm->delays = delays;
   abm->ndelays = ndelays;
 }
