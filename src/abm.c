@@ -201,6 +201,10 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last, DOUBLE *out) 
     int left_i = right_i - points_number + 1;
     double right_t = t_last + h * (int) steps_diff;
     double left_t = right_t - (points_number - 1) * h;
+    if (left_i < 0) {
+      left_t -= (left_i * h);
+      left_i = 0;
+    }
 //    This was supposed to improve interpolation precision, but only seems
 //        to make it worse. More over, it cannot easily be used in current
 //        function, so I'll just leave it like that for now.
