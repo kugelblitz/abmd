@@ -45,6 +45,13 @@
       </toolsSet>
       <compileType>
         <cTool>
+          <incDir>
+            <pElem>.</pElem>
+            <pElem>src</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>USE_LONG_DOUBLE</Elem>
+          </preprocessorList>
           <warningLevel>2</warningLevel>
         </cTool>
       </compileType>
