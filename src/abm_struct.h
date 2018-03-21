@@ -13,7 +13,6 @@ struct _ABM {
   double *init;
   double *delays;
   int ndelays;
-  int _user_set_delays;
   int abm_order;
   int interpolation_order;
   int extrapolation_order;

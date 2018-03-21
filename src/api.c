@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "abm.h"
 #include "abm_struct.h"
@@ -21,7 +22,6 @@ ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
           .init=init,
           .delays=delays,
           .ndelays=1,
-          ._user_set_delays=0,
           .abm_order=ABM_ORDER,
           .interpolation_order=4,
           .extrapolation_order=1,
@@ -35,9 +35,7 @@ ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
 }
 
 void destroy_abm(ABM *abm) {
-  if (!abm->_user_set_delays) {
-    free(abm->delays);
-  }
+  free(abm->delays);
   free(abm->final_state);
   free(abm);
 }
@@ -47,10 +45,16 @@ void set_abm_order(ABM *abm, int order) {
 }
 
 void set_delays(ABM *abm, double *delays, int ndelays) {
-  abm->_user_set_delays = 1;
-  free(abm->delays);
-  abm->delays = delays;
+  if (abm->delays != NULL) {
+    free(abm->delays);
+    abm->delays = NULL;
+  }
   abm->ndelays = ndelays;
+  if (ndelays > 0)
+  {
+    abm->delays = malloc(sizeof(double) * ndelays);
+    memcpy(abm->delays, delays, sizeof(double) * ndelays);
+  }
 }
 
 void set_interpolation_order(ABM *abm, int order) {
