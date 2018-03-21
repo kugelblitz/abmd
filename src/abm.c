@@ -396,8 +396,6 @@ void run_abm(ABM *abm) {
     rhs(states, t, rhs_out, &abm_data);
 
     correct(&abm_data);
-    get_delayed_states(&abm_data, t, t, states);
-    rhs(states, t, rhs_out, &abm_data);
 
     while (run_callback && (t - h) * hsgn < *callback_t * hsgn
                         && *callback_t * hsgn <= t * hsgn) {
