@@ -62,7 +62,7 @@ void get_corrector_coeffs(int n, DOUBLE *out) {
   for (int i = 0; i < n; i++) {
     _backward_diff(i + 1, n, diff);
     for (int j = 0; j < n; j++) {
-      out[j] += (double)(diff[j] * _MOULTON_COEFFS[i]);
+      out[j] += (DOUBLE)(diff[j] * _MOULTON_COEFFS[i]);
     }
   }
   free(diff);
@@ -80,7 +80,7 @@ void get_predictor_coeffs(int n, DOUBLE *out) {
       c += _MOULTON_COEFFS[j];
     }
     for (int j = 0; j < n; j++) {
-      out[j] += (double)(diff[j] * c);
+      out[j] += (DOUBLE)(diff[j] * c);
     }
   }
   free(diff);
