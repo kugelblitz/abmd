@@ -87,6 +87,11 @@
           <developmentMode>6</developmentMode>
           <stripSymbols>true</stripSymbols>
           <architecture>1</architecture>
+          <standard>3</standard>
+          <incDir>
+            <pElem>.</pElem>
+            <pElem>src</pElem>
+          </incDir>
           <warningLevel>2</warningLevel>
         </cTool>
         <ccTool>
@@ -131,6 +136,7 @@
           <developmentMode>6</developmentMode>
           <stripSymbols>true</stripSymbols>
           <architecture>2</architecture>
+          <standard>3</standard>
           <incDir>
             <pElem>.</pElem>
             <pElem>src</pElem>
@@ -182,6 +188,7 @@
           <developmentMode>6</developmentMode>
           <stripSymbols>true</stripSymbols>
           <architecture>2</architecture>
+          <standard>3</standard>
           <incDir>
             <pElem>.</pElem>
             <pElem>src</pElem>
