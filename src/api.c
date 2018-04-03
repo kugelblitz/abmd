@@ -50,8 +50,7 @@ void set_delays(ABM *abm, double *delays, int ndelays) {
     abm->delays = NULL;
   }
   abm->ndelays = ndelays;
-  if (ndelays > 0)
-  {
+  if (ndelays > 0) {
     abm->delays = malloc(sizeof(double) * ndelays);
     memcpy(abm->delays, delays, sizeof(double) * ndelays);
   }
