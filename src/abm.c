@@ -291,12 +291,14 @@ void get_delayed_dotstates(ABMData *abm_data, double ti, double t_last,
   int ndelays = abm_data->input->ndelays;
   double *delays = abm_data->input->delays;
 
+  int i = 0;
   for (int j = 0; j < ndelays; j++) {
     double delay = delays[j];
     if (delay == 0) continue;
     double t_delayed = ti - delay;
     get_state_at_time(abm_data, t_delayed, t_last, 1, is_last_rhs_defined,
-                      &out[j * dim]);
+                      &out[i * dim]);
+    i += 1;
   }
 }
 
