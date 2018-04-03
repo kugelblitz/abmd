@@ -388,8 +388,10 @@ void run_abm(ABM *abm) {
   // Setting initial conditions for RK4 solution
   for (int i = 0; i < dim; i++) {
     rk4_sol[i] = init[i];
-    rhs_rk4(init, NULL, t0, &rk4_rhss[0], &abm_data);
   }
+
+  // Setting initial RHS
+  rhs_rk4(init, NULL, t0, &rk4_rhss[0], &abm_data);
   free(init);
 
   // Doing rk4_n RK4 steps
