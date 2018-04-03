@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <memory.h>
+#include <string.h>
 
 #include "abm.h"
 #include "abm_struct.h"
