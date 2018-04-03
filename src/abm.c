@@ -429,11 +429,8 @@ void run_abm(ABM *abm) {
   // Initializing right-hand sides
   for (int i = extra_steps; i < k; i++) {
     get_delayed_states(&abm_data, t0 + i * h, rk4_t1, states);
-
     get_delayed_dotstates(&abm_data, t0 + i * h, rk4_t1, 1, dotstates);
-    printf("");
     DOUBLE *address = &get(queue, i)[dim];
-
     rhs(states, dotstates, t0 + i * h, address, &abm_data);
   }
 
