@@ -3,6 +3,7 @@
 
 #include "abm.h"
 
-void lagrange(double x, double *xs, DOUBLE *ys, int dim, int n, DOUBLE *out);
+void lagrange(double x, double *xs, DOUBLE *ys, int dim, int n,
+              DOUBLE *ysi, DOUBLE *out);
 
 #endif //ADAMS_POLY_H

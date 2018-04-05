@@ -18,6 +18,7 @@ typedef struct {
   DOUBLE *interp_ys;
   double *extrap_xs;
   DOUBLE *extrap_ys;
+  DOUBLE *lagrange_data;
   double rk4_h;
   DOUBLE *rhs_temp;
   Queue *queue;
@@ -30,6 +31,7 @@ void destroy_abm_data(ABMData abm_data) {
   free(abm_data.interp_ys);
   free(abm_data.extrap_xs);
   free(abm_data.extrap_ys);
+  free(abm_data.lagrange_data);
   free(abm_data.rhs_temp);
   destroy_queue(abm_data.queue);
 }
@@ -245,7 +247,7 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last,
         ys[ii * dim + jj] = sol[jj];
       }
     }
-    lagrange(t, xs, ys, dim, points_number, out);
+    lagrange(t, xs, ys, dim, points_number, abm_data->lagrange_data, out);
     return;
   }
   // Extrapolation
@@ -266,7 +268,7 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last,
       ys[ii * dim + jj] = sol[jj];
     }
   }
-  lagrange(t, xs, ys, dim, points_number, out);
+  lagrange(t, xs, ys, dim, points_number, abm_data->lagrange_data, out);
 }
 
 void get_delayed_states(ABMData *abm_data, double ti, double t_last,
@@ -380,6 +382,7 @@ void run_abm(ABM *abm) {
           .interp_ys=NULL,
           .extrap_xs=NULL,
           .extrap_ys=NULL,
+          .lagrange_data=NULL,
           .rk4_h=rk4_h,
           .rhs_temp=rhs_temp,
           .queue=queue

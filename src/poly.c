@@ -20,8 +20,11 @@ DOUBLE lagrange_2d(double x, double xs[], DOUBLE ys[], int n) {
 	return y;
 }
 
-void lagrange(double x, double *xs, DOUBLE *ys, int dim, int n, DOUBLE *out) {
-  DOUBLE *ysi = (DOUBLE *) malloc(sizeof(DOUBLE) * n);
+void lagrange(double x, double *xs, DOUBLE *ys, int dim, int n,
+              DOUBLE *ysi, DOUBLE *out) {
+  if (ysi == NULL) {
+    ysi = (DOUBLE *) malloc(sizeof(DOUBLE) * n);
+  }
   for (int i = 0; i < dim; i++) {
     for (int j = 0; j < n; j++) {
       ysi[j] = ys[j * dim + i];
