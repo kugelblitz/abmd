@@ -247,7 +247,7 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last,
         ys[ii * dim + jj] = sol[jj];
       }
     }
-    lagrange(t, xs, ys, dim, points_number, abm_data->lagrange_data, out);
+    lagrange(t, xs, ys, dim, points_number, &abm_data->lagrange_data, out);
     return;
   }
   // Extrapolation
@@ -268,7 +268,7 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last,
       ys[ii * dim + jj] = sol[jj];
     }
   }
-  lagrange(t, xs, ys, dim, points_number, abm_data->lagrange_data, out);
+  lagrange(t, xs, ys, dim, points_number, &abm_data->lagrange_data, out);
 }
 
 void get_delayed_states(ABMData *abm_data, double ti, double t_last,

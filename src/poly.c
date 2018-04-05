@@ -21,17 +21,16 @@ DOUBLE lagrange_2d(double x, double xs[], DOUBLE ys[], int n) {
 }
 
 void lagrange(double x, double *xs, DOUBLE *ys, int dim, int n,
-              DOUBLE *ysi, DOUBLE *out) {
-  if (ysi == NULL) {
-    ysi = (DOUBLE *) malloc(sizeof(DOUBLE) * n);
+              DOUBLE **ysi, DOUBLE *out) {
+  if (*ysi == NULL) {
+    *ysi = (DOUBLE *) malloc(sizeof(DOUBLE) * n);
   }
   for (int i = 0; i < dim; i++) {
     for (int j = 0; j < n; j++) {
-      ysi[j] = ys[j * dim + i];
+      (*ysi)[j] = ys[j * dim + i];
     }
-    out[i] = lagrange_2d(x, xs, ysi, n);
+    out[i] = lagrange_2d(x, xs, *ysi, n);
   }
-  free(ysi);
 }
 
 #ifdef DEBUG
