@@ -42,18 +42,25 @@ void predict(ABMData *abm_data) {
   DOUBLE *coeffs = abm_data->predictor_coeffs;
   Queue *queue = abm_data->queue;
   int q_size = get_capacity(queue);
+  DOUBLE *temp = abm_data->temp;
 
   pop(queue);
   DOUBLE *prev = peek_right(queue);
   DOUBLE *out = push(queue);
   memcpy(out, prev, sizeof(DOUBLE) * dim);
 
+  memset(temp, 0, sizeof(DOUBLE) * dim);
+
   for (int j = 0; j < abm_order; j++) {
     DOUBLE *rhs = &get(queue, q_size - j - 2)[dim];
     DOUBLE c = coeffs[j];
     for (int k = 0; k < dim; k++) {
-      out[k] += c * h * rhs[k];
+      temp[k] += c * h * rhs[k];
     }
+  }
+
+  for (int i = 0; i < dim; i++) {
+    out[i] += temp[i];
   }
 }
 
@@ -67,16 +74,22 @@ void correct(ABMData *abm_data) {
   int q_size = get_capacity(queue);
   DOUBLE *prev = get(queue, q_size - 2);
   DOUBLE *out = peek_right(queue);
+  DOUBLE *temp = abm_data->temp;
 
   memcpy(out, prev, sizeof(DOUBLE) * dim);
 
+  memset(temp, 0, sizeof(DOUBLE) * dim);
 
   for (int j = 0; j < abm_order; j++) {
     DOUBLE *rhs = &get(queue, q_size - j - 1)[dim];
     DOUBLE c = coeffs[j];
     for (int k = 0; k < dim; k++) {
-      out[k] += c * h * rhs[k];
+      temp[k] += c * h * rhs[k];
     }
+  }
+
+  for (int i = 0; i < dim; i++) {
+    out[i] += temp[i];
   }
 }
 
