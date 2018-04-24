@@ -19,7 +19,7 @@ typedef struct {
   double *extrap_xs;
   DOUBLE *extrap_ys;
   double rk4_h;
-  DOUBLE *rhs_temp;
+  DOUBLE *temp;
   Queue *queue;
 } ABMData;
 
@@ -30,7 +30,7 @@ void destroy_abm_data(ABMData abm_data) {
   free(abm_data.interp_ys);
   free(abm_data.extrap_xs);
   free(abm_data.extrap_ys);
-  free(abm_data.rhs_temp);
+  free(abm_data.temp);
   destroy_queue(abm_data.queue);
 }
 
@@ -143,7 +143,7 @@ void rhs(DOUBLE states[], double t, DOUBLE *out, void *abm_data) {
 
   ABMData *data = (ABMData *)abm_data;
   int dim = data->input->dim;
-  DOUBLE *temp = data->rhs_temp;
+  DOUBLE *temp = data->temp;
 
   memset(temp, 0, sizeof(DOUBLE) * 2 * dim);
 
@@ -335,7 +335,7 @@ void run_abm(ABM *abm) {
           .extrap_xs=NULL,
           .extrap_ys=NULL,
           .rk4_h=rk4_h,
-          .rhs_temp=rhs_temp,
+          .temp=rhs_temp,
           .queue=queue
   };
 
