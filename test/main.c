@@ -36,9 +36,6 @@ void calc_difference(void (*f)(DOUBLE *, double, DOUBLE *, void *)) {
   int order = 11;
   double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
-  double t1 = 3e7;
-  double h = 2000;
-  double delay = 3000;
   double t1 = 5;
   double h = 1 / 16.0;
   double delay = 0;
