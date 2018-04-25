@@ -5,6 +5,7 @@
 
 #include "abm.h"
 #include "abm_struct.h"
+#include "rk.h"
 #include "coeffs.h"
 #include "poly.h"
 #include "queue.h"
@@ -93,65 +94,6 @@ void correct(ABMData *abm_data) {
   }
 }
 
-void multiply_vector(DOUBLE *vec, DOUBLE c, int dim) {
-  for (int i = 0; i < dim; i++) {
-    vec[i] = vec[i] * c;
-  }
-}
-
-void rk4_step(void (*f)(DOUBLE *, double, DOUBLE *, void *), double h, double t,
-              DOUBLE *state, int dim, int ndelays, void *context, DOUBLE *out) {
-
-  DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) * 4 * dim * (1 + ndelays));
-
-  DOUBLE *ks = data;
-  DOUBLE *k1 = ks;
-  DOUBLE *k2 = &ks[dim];
-  DOUBLE *k3 = &ks[dim * 2];
-  DOUBLE *k4 = &ks[dim * 3];
-
-  DOUBLE *ins = &data[dim * 4];
-  DOUBLE *in1 = ins;
-  DOUBLE *in2 = &ins[dim * ndelays];
-  DOUBLE *in3 = &ins[dim * ndelays * 2];
-  DOUBLE *in4 = &ins[dim * ndelays * 3];
-
-  for (int i = 0; i < ndelays; i++) {
-    memcpy(&in1[i * dim], state, dim * sizeof(DOUBLE));
-  }
-  f(in1, t, k1, context);
-  multiply_vector(k1, h, dim);
-
-  for (int i = 0; i < ndelays; i++) {
-    for (int j = 0; j < dim; j++) {
-      in2[i * dim + j] = state[j] + k1[j] / 2;
-    }
-  }
-  f(in2, t + h / 2, k2, context);
-  multiply_vector(k2, h, dim);
-
-  for (int i = 0; i < ndelays; i++) {
-    for (int j = 0; j < dim; j++) {
-      in3[i * dim + j] = state[j] + k2[j] / 2;
-    }
-  }
-  f(in3, t + h / 2, k3, context);
-  multiply_vector(k3, h, dim);
-
-  for (int i = 0; i < ndelays; i++) {
-    for (int j = 0; j < dim; j++) {
-      in4[i * dim + j] = state[j] + k3[j];
-    }
-  }
-  f(in4, t + h, k4, context);
-  multiply_vector(k4, h, dim);
-
-  for (int i = 0; i < dim; i++) {
-    out[i] = state[i] + (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
-  }
-  free(data);
-}
-
 void rhs(DOUBLE states[], double t, DOUBLE *out, void *abm_data) {
 
   ABMData *data = (ABMData *)abm_data;
@@ -186,8 +128,8 @@ void rhs_rk4(DOUBLE *state, double t, DOUBLE *out, void *abm_data) {
       memcpy(&states[i * dim], state, dim * sizeof(DOUBLE));
       continue;
     }
-    rk4_step(rhs, -delay, t, state, dim, ndelays,
-         data, &states[i * dim]);
+    rk_step(rhs, -delay, t, state, dim, ndelays,
+            data, &states[i * dim]);
   }
   rhs(states, t, out, data);
   free(states);
@@ -361,8 +303,8 @@ void run_abm(ABM *abm) {
   // Doing rk4_n RK4 steps
   for (int i = 1; i < rk4_n; i++) {
     double t = t0 + rk4_h * i;
-    rk4_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
-             &abm_data, &rk4_sol[i * dim]);
+    rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
+            &abm_data, &rk4_sol[i * dim]);
   }
 
   // Writing data from RK4 to the queue
