@@ -19,7 +19,7 @@ int callback_there(double *t, double *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(double));
   abm_test->i++;
-  t[0] += 2000;
+  t[0] += 1 / 16.0;
   return 1;
 }
 
@@ -28,17 +28,17 @@ int callback_back(double *t, double *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state, dim * sizeof(double));
   abm_test->i++;
-  t[0] -= 2000;
+  t[0] -= 1 / 16.0;
   return 1;
 }
 
 void calc_difference(void (*f)(DOUBLE *, double, DOUBLE *, void *)) {
   int order = 11;
-  double init[] = {-3844e5, 0, 0, 1023};
+  double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
-  double t1 = 3e7;
-  double h = 2000;
-  double delay = 3000;
+  double t1 = 5;
+  double h = 1 / 16.0;
+  double delay = 0;
   int dim = 4;
 
   int n = (int)(1 + (t1 - t0) / h);
@@ -98,7 +98,7 @@ void calc_difference(void (*f)(DOUBLE *, double, DOUBLE *, void *)) {
 
 void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
   int dim = 4;
-  const DOUBLE G = 6.67408e-11;
+  const DOUBLE G = 0.49821740236800005;
   const double m1 = 5.972e24;
   const double m2 = 7.34767309e22;
   const DOUBLE mu1 = G * m1;
