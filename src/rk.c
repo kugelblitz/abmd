@@ -128,8 +128,8 @@ void rk4_step(RHS f, double h, double t,
 }
 
 
-void dop853_step(RHS f, double h, double t,
-              DOUBLE *x, int dim, int ndelays, void *context, DOUBLE *out) {
+void dopri8_step(RHS f, double h, double t,
+                 DOUBLE *x, int dim, int ndelays, void *context, DOUBLE *out) {
 
 
   DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) *
@@ -252,5 +252,5 @@ void dop853_step(RHS f, double h, double t,
 
 void rk_step(RHS f, double h, double t,
              DOUBLE *state, int dim, int ndelays, void *context, DOUBLE *out) {
-  dop853_step(f, h, t, state, dim, ndelays, context, out);
+  dopri8_step(f, h, t, state, dim, ndelays, context, out);
 }
