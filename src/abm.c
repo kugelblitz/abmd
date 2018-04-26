@@ -268,6 +268,7 @@ void run_abm(ABM *abm) {
   if (max_positive_delay != 0) {
     extra_steps += interpolation_order - 1;
   }
+  extra_steps += 16 * 5;
   int rk4_i1 = abm_order - 1 + extra_steps;
   double rk4_h = h / (double) RK_STEPS_IN_ABM;
   int rk4_n = 1 + rk4_i1 * RK_STEPS_IN_ABM;
@@ -298,8 +299,8 @@ void run_abm(ABM *abm) {
   for (int i = 0; i < dim; i++) {
     rk4_sol[i] = init[i];
   }
-  free(init);
 
+#if 0
   // Doing rk4_n RK4 steps
   for (int i = 1; i < rk4_n; i++) {
     double t = t0 + rk4_h * i;
@@ -314,21 +315,40 @@ void run_abm(ABM *abm) {
     memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(DOUBLE));
     k++;
   }
-  free(rk4_sol);
+#endif
 
   int run_callback = abm->callback && abm->callback_t;
   double *callback_state = (double *) malloc(sizeof(double) * dim);
   DOUBLE *callback_state_l = (DOUBLE *) malloc(sizeof(DOUBLE) * dim);
   double *callback_t = abm->callback_t;
 
+  for (int i = 0; i < dim; i++) {
+    rk4_sol[i] = init[i];
+  }
+  
+  double rk4_t = t0;
+  
   while (run_callback && *callback_t * hsgn <= rk4_t1 * hsgn) {
-    get_state_at_time(&abm_data, *callback_t, rk4_t1, callback_state_l);
-    for (int i = 0; i < dim; i++) {
-      callback_state[i] = (double) callback_state_l[i];
-    }
+    rk_step(rhs_rk4, *callback_t - rk4_t, rk4_t, &rk4_sol[0], dim, 1,
+            &abm_data, &rk4_sol[dim]);
+    
+    for (int i = 0; i < dim; i++)
+      callback_state[i] = (double) rk4_sol[dim + i];
+    
+    rk4_t = *callback_t;
     run_callback = abm->callback(callback_t, callback_state, abm->context);
+    memcpy(rk4_sol, rk4_sol + dim, dim * sizeof(DOUBLE));
   }
 
+  rk_step(rhs_rk4, t1 - rk4_t, rk4_t, &rk4_sol[0], dim, 1,
+          &abm_data, &rk4_sol[dim]);
+  for (int i = 0; i < dim; i++) {
+    abm->final_state[i] = (double) rk4_sol[dim + i];
+  }
+  
+  free(init);
+  free(rk4_sol);
+#if 0
   // Initializing right-hand sides
   for (int i = extra_steps; i < k; i++) {
     get_delayed_states(&abm_data, t0 + i * h, rk4_t1, states);
@@ -365,7 +385,7 @@ void run_abm(ABM *abm) {
   for (int i = 0; i < dim; i++) {
     abm->final_state[i] = (double) peek_right(queue)[i];
   }
-
+#endif
   destroy_abm_data(abm_data);
   free(states);
   free(callback_state);
