@@ -14,6 +14,7 @@ typedef double DOUBLE;
 #endif
 
 typedef struct _ABM ABM;
+typedef void (*RHS)(DOUBLE states[], double t, DOUBLE *out, void *context);
 
 void run_abm(ABM *);
 ABM *create_abm(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *),

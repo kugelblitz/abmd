@@ -22,6 +22,7 @@
       <itemPath>src/coeffs.c</itemPath>
       <itemPath>src/poly.c</itemPath>
       <itemPath>src/queue.c</itemPath>
+      <itemPath>src/rk.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -75,6 +76,8 @@
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="src/rk.c" ex="false" tool="0" flavor2="0">
+      </item>
     </conf>
     <conf name="Release32" type="2">
       <toolsSet>
@@ -123,6 +126,8 @@
       <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/rk.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
     <conf name="Release64" type="2">
@@ -175,6 +180,8 @@
       <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/rk.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
     <conf name="Release64LongDouble" type="2">
@@ -230,6 +237,8 @@
       <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/rk.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
     <conf name="ReleaseWin32LongDouble" type="2">
