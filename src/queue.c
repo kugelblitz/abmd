@@ -6,23 +6,30 @@
 
 
 struct _Queue {
+  double t0, h;
   int head, tail, size;
   int capacity, block_size;
   DOUBLE* array;
+  double *_lgr_ws, *_lgr_denom;
 };
 
 Queue *create_queue(int capacity, int block_size) {
   Queue* queue = (Queue *) malloc(sizeof(Queue));
+  queue->t0 = 0;
+  queue->h = 1;
   queue->capacity = capacity;
   queue->block_size = block_size;
   queue->head = queue->size = 0;
   queue->tail = block_size * (capacity - 1);
   queue->array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
+  queue->_lgr_ws = (double *) malloc(capacity * sizeof(double));
+  queue->_lgr_denom = (double *) malloc(block_size * sizeof(double));
   return queue;
 }
 
 void destroy_queue(Queue *queue) {
   free(queue->array);
+  free(queue->_lgr_ws);
   free(queue);
 }
 
@@ -36,6 +43,59 @@ int is_empty(Queue *q) {
 
 int get_capacity(Queue *q) {
   return q->capacity;
+}
+
+void set_t0(Queue *q, double t0) {
+  q->t0 = t0;
+}
+
+double get_t0(Queue *q) {
+  return q->t0;
+}
+
+void set_step_size(Queue *q, double h) {
+  q->h = h;
+}
+
+double get_step_size(Queue *q) {
+  return q->h;
+}
+
+double _compute_wj(Queue *q, int j) {
+  /*
+   * Computes j-th barycentric Lagrange weight (eq. 3.2)
+  */
+  double w = 1;
+  int n = get_capacity(q);
+  double h = get_step_size(q);
+  for (int k = 0; k < n; k++) {
+    if (k == j) continue;
+    w /= (j - k) * h;  // ts[j] - ts[k] simplified
+  }
+  return w;
+}
+
+void _initialize_ws(Queue *q) {
+  int n = get_capacity(q);
+  for (int i = 0; i < n; i++) {
+    q->_lgr_ws[i] = _compute_wj(q, i);
+  }
+}
+
+void evaluate(Queue *q, double t, double *out) {
+  int n = get_capacity(q);
+  int dim = q->block_size;
+  double t0 = get_t0(q);
+  double h = get_step_size(q);
+  DOUBLE *nom = malloc(dim * sizeof(DOUBLE));
+  DOUBLE denom = 0;
+  for (int j = 0; j < n; j++) {
+    denom += q->_lgr_ws[j] / (t - t0 - j * h);
+    DOUBLE *block = get(q, j);
+    for (int i = 0; i < dim; i++) {
+      nom[i] += q->_lgr_ws[j] * block[i] / (t - t0 - j * h);
+    }
+  }
 }
 
 DOUBLE* get(Queue *q, int block_idx) {
