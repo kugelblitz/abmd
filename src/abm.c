@@ -133,7 +133,7 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
       continue;
     }
     rk_step(rhs, -delay, t, state, dim, ndelays,
-            data, &states[i * dim]);
+            data, &states[i * dim], NULL);
   }
   rhs(states, NULL, t, out, data);
   free(states);
@@ -354,7 +354,7 @@ void run_abm(ABM *abm) {
   for (int i = 1; i < rk4_n; i++) {
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
-            &abm_data, &rk4_sol[i * dim]);
+            &abm_data, &rk4_sol[i * dim], &rk4_rhss[i * dim]);
   }
 
   // Writing data from RK4 to the queue

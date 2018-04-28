@@ -34,7 +34,7 @@ int callback_back(double *t, double *state, void *context) {
   return 1;
 }
 
-void calc_difference(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *)) {
+void calc_difference(RHS f) {
   int order = 11;
   double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
