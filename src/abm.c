@@ -351,6 +351,7 @@ void run_abm(ABM *abm) {
 
   // Doing rk4_n RK4 steps
   for (int i = 1; i < rk4_n; i++) {
+    printf("RK %d/%d\n", i, rk4_n); fflush(stdout);
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
             &abm_data, &rk4_sol[i * dim], &rk4_rhss[i * dim]);
