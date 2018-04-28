@@ -17,14 +17,14 @@ typedef struct _ABM ABM;
 typedef void (*RHS)(DOUBLE states[], double t, DOUBLE *out, void *context);
 
 void run_abm(ABM *);
-ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
-                double t0, double t1, double h, double *init);
+ABM *create_abm(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *),
+                int dim, double t0, double t1, double h, double *init);
 void destroy_abm(ABM *abm);
 void set_abm_order(ABM *abm, int order);
 void set_delays(ABM *abm, double *delays, int ndelays);
 void set_interpolation_order(ABM *abm, int order);
 void set_extrapolation_order(ABM *abm, int order);
-void set_f2(ABM *abm, void (*f2)(DOUBLE *, double, DOUBLE *, void *));
+void set_f2(ABM *abm, void (*f2)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *));
 void set_context(ABM *abm, void *context);
 void set_init_call(ABM *abm, void (*init_call)(DOUBLE[], void*));
 void set_callback(ABM *abm, int (*callback)(double *, double[], void*),

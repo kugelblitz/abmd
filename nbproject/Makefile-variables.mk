@@ -38,6 +38,22 @@ CND_ARTIFACT_PATH_Release64LongDouble=dist/Release64LongDouble/GNU-Linux/libdde-
 CND_PACKAGE_DIR_Release64LongDouble=dist/Release64LongDouble/GNU-Linux/package
 CND_PACKAGE_NAME_Release64LongDouble=libdde.so.tar
 CND_PACKAGE_PATH_Release64LongDouble=dist/Release64LongDouble/GNU-Linux/package/libdde.so.tar
+# ReleaseWin32LongDouble configuration
+CND_PLATFORM_ReleaseWin32LongDouble=GNU-Linux
+CND_ARTIFACT_DIR_ReleaseWin32LongDouble=dist/ReleaseWin32LongDouble/GNU-Linux
+CND_ARTIFACT_NAME_ReleaseWin32LongDouble=dde-longdouble.dll
+CND_ARTIFACT_PATH_ReleaseWin32LongDouble=dist/ReleaseWin32LongDouble/GNU-Linux/dde-longdouble.dll
+CND_PACKAGE_DIR_ReleaseWin32LongDouble=dist/ReleaseWin32LongDouble/GNU-Linux/package
+CND_PACKAGE_NAME_ReleaseWin32LongDouble=libdde.so.tar
+CND_PACKAGE_PATH_ReleaseWin32LongDouble=dist/ReleaseWin32LongDouble/GNU-Linux/package/libdde.so.tar
+# ReleaseWin64LongDouble configuration
+CND_PLATFORM_ReleaseWin64LongDouble=GNU-Linux
+CND_ARTIFACT_DIR_ReleaseWin64LongDouble=dist/ReleaseWin64LongDouble/GNU-Linux
+CND_ARTIFACT_NAME_ReleaseWin64LongDouble=dde-longdouble.dll
+CND_ARTIFACT_PATH_ReleaseWin64LongDouble=dist/ReleaseWin64LongDouble/GNU-Linux/dde-longdouble.dll
+CND_PACKAGE_DIR_ReleaseWin64LongDouble=dist/ReleaseWin64LongDouble/GNU-Linux/package
+CND_PACKAGE_NAME_ReleaseWin64LongDouble=libdde.so.tar
+CND_PACKAGE_PATH_ReleaseWin64LongDouble=dist/ReleaseWin64LongDouble/GNU-Linux/package/libdde.so.tar
 #
 # include compiler specific variables
 #

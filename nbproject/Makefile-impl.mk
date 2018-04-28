@@ -31,7 +31,7 @@ DEFAULTCONF=Debug
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Debug Release32 Release64 Release64LongDouble 
+ALLCONFS=Debug Release32 Release64 Release64LongDouble ReleaseWin32LongDouble ReleaseWin64LongDouble 
 
 
 # build

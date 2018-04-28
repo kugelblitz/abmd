@@ -6,8 +6,8 @@
 
 #define ABM_ORDER 11
 
-ABM *create_abm(void (*f)(DOUBLE *, double, DOUBLE *, void *), int dim,
-                double t0, double t1, double h, double *init) {
+ABM *create_abm(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *),
+                int dim, double t0, double t1, double h, double *init) {
   ABM *abm = (ABM *) malloc(sizeof(ABM));
   double *delays = (double *) malloc(sizeof(double));
   delays[0] = 0;
@@ -50,8 +50,7 @@ void set_delays(ABM *abm, double *delays, int ndelays) {
     abm->delays = NULL;
   }
   abm->ndelays = ndelays;
-  if (ndelays > 0)
-  {
+  if (ndelays > 0) {
     abm->delays = malloc(sizeof(double) * ndelays);
     memcpy(abm->delays, delays, sizeof(double) * ndelays);
   }
@@ -65,7 +64,8 @@ void set_extrapolation_order(ABM *abm, int order) {
   abm->extrapolation_order = order;
 }
 
-void set_f2(ABM *abm, void (*f2)(DOUBLE *, double, DOUBLE *, void *)) {
+void set_f2(ABM *abm, void (*f2)(DOUBLE *, DOUBLE *,
+                                 double, DOUBLE *, void *)) {
   abm->f2 = f2;
 }
 

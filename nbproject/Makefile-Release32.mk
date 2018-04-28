@@ -70,27 +70,27 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde.${CND_DLIB_EXT}: ${OBJECTFILES
 ${OBJECTDIR}/src/abm.o: src/abm.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abm.o src/abm.c
+	$(COMPILE.c) -O3 -Wall -s -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abm.o src/abm.c
 
 ${OBJECTDIR}/src/api.o: src/api.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/api.o src/api.c
+	$(COMPILE.c) -O3 -Wall -s -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/api.o src/api.c
 
 ${OBJECTDIR}/src/coeffs.o: src/coeffs.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/coeffs.o src/coeffs.c
+	$(COMPILE.c) -O3 -Wall -s -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/coeffs.o src/coeffs.c
 
 ${OBJECTDIR}/src/poly.o: src/poly.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/poly.o src/poly.c
+	$(COMPILE.c) -O3 -Wall -s -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/poly.o src/poly.c
 
 ${OBJECTDIR}/src/queue.o: src/queue.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/queue.o src/queue.c
+	$(COMPILE.c) -O3 -Wall -s -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/queue.o src/queue.c
 
 ${OBJECTDIR}/src/rk.o: src/rk.c
 	${MKDIR} -p ${OBJECTDIR}/src
