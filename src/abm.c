@@ -285,7 +285,6 @@ void run_abm(ABM *abm) {
   int RK_STEPS_IN_ABM = 32;
 
   int interpolation_order = abm->interpolation_order;
-  int extrapolation_order = abm->extrapolation_order;
 
   int non_zero_delays = 0;
   double max_positive_delay = 0;
