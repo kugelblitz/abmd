@@ -84,7 +84,7 @@ void calc_difference(RHS f) {
 
   run_abm(abm);
   destroy_abm(abm);
-  double *diff = malloc(sizeof(double) * sol_size);
+  double *diff = malloc(sizeof(double) * sol_size * 2);
 
   for (int i = 0; i < sol_size; i++) {
     double x1 = sol_reversed[i * dim];
