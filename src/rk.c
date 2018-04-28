@@ -80,7 +80,7 @@ DOUBLE b1 =   5.42937341165687622380535766363E-2L,
 
 
 void rk4_step(RHS f, double h, double t,
-              DOUBLE *state, int dim, int ndelays, void *context, DOUBLE *out) {
+              DOUBLE *x, int dim, int ndelays, void *context, DOUBLE *out) {
 
   DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) *
                                    (4 * dim + dim * ndelays));
@@ -93,12 +93,12 @@ void rk4_step(RHS f, double h, double t,
   DOUBLE *input = &data[dim * 4];
 
   for (int i = 0; i < ndelays; i++) {
-    memcpy(&input[i * dim], state, dim * sizeof(DOUBLE));
+    memcpy(&input[i * dim], x, dim * sizeof(DOUBLE));
   }
   f(input, t, k1, context);
 
   for (int i = 0; i < dim; i++) {
-    input[i] = state[i] + h * k1[i] / 2;
+    input[i] = x[i] + h * k1[i] / 2;
   }
   for (int i = 1; i < ndelays; i++) {
     memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
@@ -106,7 +106,7 @@ void rk4_step(RHS f, double h, double t,
   f(input, t + h / 2, k2, context);
 
   for (int i = 0; i < dim; i++) {
-    input[i] = state[i] + h * k2[i] / 2;
+    input[i] = x[i] + h * k2[i] / 2;
   }
   for (int i = 1; i < ndelays; i++) {
     memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
@@ -114,7 +114,7 @@ void rk4_step(RHS f, double h, double t,
   f(input, t + h / 2, k3, context);
 
   for (int i = 0; i < dim; i++) {
-    input[i] = state[i] + h * k3[i];
+    input[i] = x[i] + h * k3[i];
   }
   for (int i = 1; i < ndelays; i++) {
     memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
@@ -122,7 +122,7 @@ void rk4_step(RHS f, double h, double t,
   f(input, t + h, k4, context);
 
   for (int i = 0; i < dim; i++) {
-    out[i] = state[i] + h * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
+    out[i] = x[i] + h * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
   }
   free(data);
 }
