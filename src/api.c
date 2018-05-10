@@ -28,7 +28,9 @@ ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init) {
           .context=NULL,
           .init_call=NULL,
           .callback_t=NULL,
-          .callback=NULL
+          .callback=NULL,
+          .delayed_idxs=NULL,
+          .delayed_idxs_len = dim
   };
   return abm;
 }
@@ -36,6 +38,7 @@ ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init) {
 void destroy_abm(ABM *abm) {
   free(abm->delays);
   free(abm->final_state);
+  free(abm->delayed_idxs);
   free(abm);
 }
 
@@ -83,4 +86,22 @@ void set_callback(ABM *abm, int (*callback)(double*, double[], void*),
 
 double *get_final_state(ABM *abm) {
   return abm->final_state;
+}
+
+void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len) {
+  free(abm->delayed_idxs);
+  int idxs_len = 0;
+  for (int i = 0; i < ranges_len; i += 2) {
+    idxs_len += ranges[i + 1] - ranges[i];
+  }
+  int *idxs = (int *) malloc(idxs_len * sizeof(int));
+  int k = 0;
+  for (int i = 0; i < ranges_len; i += 2) {
+    for (int j = ranges[i]; j < ranges[i + 1]; j++) {
+      idxs[k] = j;
+      k += 1;
+    }
+  }
+  abm->delayed_idxs = idxs;
+  abm->delayed_idxs_len = idxs_len;
 }

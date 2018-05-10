@@ -61,6 +61,7 @@ void calc_difference(RHS f) {
   set_delays(abm, (double[]){0, delay}, 2);
   set_callback(abm, callback_there, &callback_t);
   set_context(abm, &abm_test);
+  set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4);
 
   run_abm(abm);
   printf("Final: %e %e\n", get_final_state(abm)[0], get_final_state(abm)[2]);
@@ -81,6 +82,7 @@ void calc_difference(RHS f) {
   set_context(abm, &abm_test);
   callback_t = t1;
   abm_test.i = 0;
+  set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4);
 
   run_abm(abm);
   destroy_abm(abm);
@@ -122,8 +124,8 @@ void orbit(DOUBLE states[], DOUBLE dotstates[], double t,
   out[1] = -q * x / (r * r * r);
   out[2] = vy;
   out[3] = -q * y / (r * r * r);
-  DOUBLE x_delayed = states[dim];
-  DOUBLE y_delayed = states[dim + 2];
+  DOUBLE x_delayed = states[4];
+  DOUBLE y_delayed = states[5];
   const int ae = 6371000;
   const double k2 = 0.335;
   DOUBLE c = -(3 * k2 * mu2 / (r * r * r)) * (1 + mu2 / mu1) * (pow(ae / r, 5));
