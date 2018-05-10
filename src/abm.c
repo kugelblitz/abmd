@@ -135,7 +135,6 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
 
   DOUBLE *states_tmp = data->states_tmp;
   DOUBLE *states = data->states;
-  DOUBLE *rk_memory = data->rk_memory;
 
   for (int i = 0; i < ndelays; i++) {
     double delay = data->input->delays[i];
@@ -144,7 +143,7 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
       continue;
     }
     rk_step(rhs, -delay, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
-            data, &states_tmp[i * dim], NULL, &rk_memory, "rk4");
+            data, &states_tmp[i * dim], NULL, &data->rk_memory, "rk4");
   }
 
   memcpy(states, states_tmp, dim * sizeof(DOUBLE));
@@ -391,7 +390,8 @@ void run_abm(ABM *abm) {
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
             abm->delayed_idxs, abm->delayed_idxs_len, &abm_data,
-            &rk4_sol[i * dim], &rk4_rhss[(i - 1) * dim], &rk_memory, "dopri8");
+            &rk4_sol[i * dim], &rk4_rhss[(i - 1) * dim], &abm_data.rk_memory,
+            "dopri8");
   }
 
   // Computing last RHS
