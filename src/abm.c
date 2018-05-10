@@ -385,16 +385,18 @@ void run_abm(ABM *abm) {
     rk4_sol[i] = init[i];
   }
 
-  // Setting initial RHS
-  rhs_rk4(init, NULL, t0, &rk4_rhss[0], &abm_data);
-
   // Doing rk4_n RK4 steps
   for (int i = 1; i < rk4_n; i++) {
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
             abm->delayed_idxs, abm->delayed_idxs_len, &abm_data,
-            &rk4_sol[i * dim], &rk4_rhss[i * dim], &rk_memory, "dopri8");
+            &rk4_sol[i * dim], &rk4_rhss[(i - 1) * dim], &rk_memory, "dopri8");
   }
+
+  // Computing last RHS
+  int last = (rk4_n - 1) * dim;
+  rhs_rk4(&rk4_sol[last], NULL, t0 + rk4_h * (rk4_n - 1),
+          &rk4_rhss[last], &abm_data);
 
   // Writing data from RK4 to the queue
   int k = 0;

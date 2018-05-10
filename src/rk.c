@@ -113,6 +113,10 @@ void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
   copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
   f(input, NULL, t, k1, context);
 
+  if (rhs_out != NULL) {
+    memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
+  }
+
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * k1[i] / 2;
   }
@@ -133,10 +137,6 @@ void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
 
   for (int i = 0; i < dim; i++) {
     out[i] = x[i] + h * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
-  }
-
-  if (rhs_out != NULL) {
-    f(out, NULL, t + h, rhs_out, context);
   }
 }
 
@@ -167,6 +167,10 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
   memcpy(input, x, dim * sizeof(DOUBLE));
   copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
   f(input, NULL, t, k1, context);
+
+  if (rhs_out != NULL) {
+    memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
+  }
 
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * a21 * k1[i];
@@ -239,10 +243,6 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
   }
 
   memcpy(out, k5, dim * sizeof(DOUBLE));
-
-  if (rhs_out != NULL) {
-    f(out, NULL, t + h, rhs_out, context);
-  }
 }
 
 void rk_step(RHS f, double h, double t, DOUBLE *state, int dim, int ndelays,
