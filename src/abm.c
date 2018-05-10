@@ -481,6 +481,7 @@ void run_abm(ABM *abm) {
   destroy_abm_data(abm_data);
   free(states);
   free(states_tmp);
+  free(dotstates);
   free(callback_state);
   free(callback_state_l);
 }
