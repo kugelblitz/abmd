@@ -97,7 +97,7 @@ void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
               DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
 
   if (*memory == NULL) {
-    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (5 * dim +
+    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (11 * dim +
                                 delayed_idxs_len * (ndelays - 1)));
   }
   DOUBLE *data = *memory;

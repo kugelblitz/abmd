@@ -23,8 +23,6 @@ typedef struct {
   double rk4_h;
   DOUBLE *temp;
   Queue *queue;
-  int *delayed_idxs;
-  int delayed_idxs_len;
   DOUBLE *states;
   DOUBLE *states_tmp;
   DOUBLE *rk_memory;
@@ -39,6 +37,9 @@ void destroy_abm_data(ABMData abm_data) {
   free(abm_data.extrap_ys);
   free(abm_data.lagrange_data);
   free(abm_data.temp);
+  free(abm_data.states);
+  free(abm_data.states_tmp);
+  free(abm_data.rk_memory);
   destroy_queue(abm_data.queue);
 }
 
@@ -486,10 +487,7 @@ void run_abm(ABM *abm) {
 #endif
 
   destroy_abm_data(abm_data);
-  free(states);
-  free(states_tmp);
   free(dotstates);
-  free(rk_memory);
   free(callback_state);
   free(callback_state_l);
 }
