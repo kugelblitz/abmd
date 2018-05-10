@@ -91,10 +91,8 @@ void calc_difference(RHS f) {
     double x2 = sol_back[i * dim];
     double y1 = sol_reversed[i * dim + 2];
     double y2 = sol_back[i * dim + 2];
-//    printf("(%.16f, %.16f) (%.16f, %.16f)\n", x1, y1, x2, y2);
     diff[i * 2] = t0 + i * h;
     diff[i * 2 + 1] = (double) sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-//    printf("%e\n", diff[i * 2 + 1]);
   }
 
   plot("diff.png", diff, 2, sol_size);
