@@ -144,7 +144,7 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
       continue;
     }
     rk_step(rhs, -delay, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
-            data, &states_tmp[i * dim], NULL, &rk_memory);
+            data, &states_tmp[i * dim], NULL, &rk_memory, "rk4");
   }
 
   memcpy(states, states_tmp, dim * sizeof(DOUBLE));
@@ -392,8 +392,8 @@ void run_abm(ABM *abm) {
   for (int i = 1; i < rk4_n; i++) {
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
-            abm->delayed_idxs, abm->delayed_idxs_len,
-            &abm_data, &rk4_sol[i * dim], &rk4_rhss[i * dim], &rk_memory);
+            abm->delayed_idxs, abm->delayed_idxs_len, &abm_data,
+            &rk4_sol[i * dim], &rk4_rhss[i * dim], &rk_memory, "dopri8");
   }
 
   // Writing data from RK4 to the queue
