@@ -18,7 +18,6 @@ int callback_there(double *t, double *state, void *context) {
   ABMTest *abm_test = (ABMTest *) context;
   int dim = abm_test->dim;
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(double));
-//  printf("%e %e %e\n", *t, state[0], state[2]);
   abm_test->i++;
   t[0] += 1 / 32.0;
   return 1;
@@ -28,7 +27,6 @@ int callback_back(double *t, double *state, void *context) {
   ABMTest *abm_test = (ABMTest *) context;
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state, dim * sizeof(double));
-//  printf("%e %e %e\n", *t, state[0], state[2]);
   abm_test->i++;
   t[0] -= 1 / 32.0;
   return 1;
