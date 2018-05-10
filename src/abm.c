@@ -27,6 +27,7 @@ typedef struct {
   int delayed_idxs_len;
   DOUBLE *states;
   DOUBLE *states_tmp;
+  DOUBLE *rk_memory;
 } ABMData;
 
 void destroy_abm_data(ABMData abm_data) {
@@ -134,6 +135,7 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
 
   DOUBLE *states_tmp = data->states_tmp;
   DOUBLE *states = data->states;
+  DOUBLE *rk_memory = data->rk_memory;
 
   for (int i = 0; i < ndelays; i++) {
     double delay = data->input->delays[i];
@@ -142,7 +144,7 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
       continue;
     }
     rk_step(rhs, -delay, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
-            data, &states_tmp[i * dim], NULL);
+            data, &states_tmp[i * dim], NULL, &rk_memory);
   }
 
   memcpy(states, states_tmp, dim * sizeof(DOUBLE));
@@ -351,6 +353,7 @@ void run_abm(ABM *abm) {
   DOUBLE *states_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
   DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * (dim +
                                      abm->delayed_idxs_len * (ndelays - 1)));
+  DOUBLE *rk_memory = NULL;
   DOUBLE *dotstates = NULL;
   if (non_zero_delays > 0) {
     dotstates = (DOUBLE *) malloc(sizeof(DOUBLE) * dim *
@@ -373,7 +376,8 @@ void run_abm(ABM *abm) {
           .temp=rhs_temp,
           .queue=queue,
           .states=states,
-          .states_tmp=states_tmp
+          .states_tmp=states_tmp,
+          .rk_memory=rk_memory
   };
 
   // Setting initial conditions for RK4 solution
@@ -389,7 +393,7 @@ void run_abm(ABM *abm) {
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
             abm->delayed_idxs, abm->delayed_idxs_len,
-            &abm_data, &rk4_sol[i * dim], &rk4_rhss[i * dim]);
+            &abm_data, &rk4_sol[i * dim], &rk4_rhss[i * dim], &rk_memory);
   }
 
   // Writing data from RK4 to the queue
@@ -482,6 +486,7 @@ void run_abm(ABM *abm) {
   free(states);
   free(states_tmp);
   free(dotstates);
+  free(rk_memory);
   free(callback_state);
   free(callback_state_l);
 }

@@ -94,10 +94,13 @@ void copy_delayed_states(DOUBLE *vec, int dim, int ndelays,
 
 void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
               int *delayed_idxs, int delayed_idxs_len, void *context,
-              DOUBLE *out, DOUBLE *rhs_out) {
+              DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
 
-  DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) * (5 * dim +
-                                   delayed_idxs_len * (ndelays - 1)));
+  if (*memory == NULL) {
+    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (5 * dim +
+                                delayed_idxs_len * (ndelays - 1)));
+  }
+  DOUBLE *data = *memory;
 
   DOUBLE *k1 = data;
   DOUBLE *k2 = &data[dim];
@@ -135,17 +138,18 @@ void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
   if (rhs_out != NULL) {
     f(out, NULL, t + h, rhs_out, context);
   }
-
-  free(data);
 }
 
 
 void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
                  int *delayed_idxs, int delayed_idxs_len, void *context,
-                 DOUBLE *out, DOUBLE *rhs_out) {
+                 DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
 
-  DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) * (11 * dim +
-                                   delayed_idxs_len * (ndelays - 1)));
+  if (*memory == NULL) {
+    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (11 * dim +
+                                delayed_idxs_len * (ndelays - 1)));
+  }
+  DOUBLE *data = *memory;
 
   DOUBLE *k1 = data;
   DOUBLE *k2 = &data[dim];
@@ -239,13 +243,11 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
   if (rhs_out != NULL) {
     f(out, NULL, t + h, rhs_out, context);
   }
-
-  free(data);
 }
 
 void rk_step(RHS f, double h, double t, DOUBLE *state, int dim, int ndelays,
              int *delayed_idxs, int delayed_idxs_len, void *context,
-             DOUBLE *out, DOUBLE *rhs_out) {
+             DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
   dopri8_step(f, h, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
-              context, out, rhs_out);
+              context, out, rhs_out, memory);
 }
