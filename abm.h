@@ -30,5 +30,6 @@ void set_init_call(ABM *abm, void (*init_call)(DOUBLE[], void*));
 void set_callback(ABM *abm, int (*callback)(double *, double[], void*),
                   double *callback_t);
 double *get_final_state(ABM *abm);
+void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len);
 
 #endif //DDE_ABM_H
