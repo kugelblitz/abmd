@@ -316,7 +316,7 @@ void run_abm(ABM *abm) {
   get_predictor_coeffs(abm_order, predictor_coeffs);
   get_corrector_coeffs(abm_order, corrector_coeffs);
 
-  int RK_STEPS_IN_ABM = 32;
+  int RK_STEPS_IN_ABM = 8;
 
   int interpolation_order = abm->interpolation_order;
 
