@@ -26,6 +26,7 @@ typedef struct {
   DOUBLE *states;
   DOUBLE *states_tmp;
   DOUBLE *rk_memory;
+  DOUBLE *inner_rk_memory;
 } ABMData;
 
 void destroy_abm_data(ABMData abm_data) {
@@ -40,6 +41,7 @@ void destroy_abm_data(ABMData abm_data) {
   free(abm_data.states);
   free(abm_data.states_tmp);
   free(abm_data.rk_memory);
+  free(abm_data.inner_rk_memory);
   destroy_queue(abm_data.queue);
 }
 
@@ -144,7 +146,7 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
       continue;
     }
     rk_step(rhs, -delay, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
-            data, &states_tmp[i * dim], NULL, &data->rk_memory, "rk4");
+            data, &states_tmp[i * dim], NULL, &data->inner_rk_memory, "rk4");
   }
 
   memcpy(states, states_tmp, dim * sizeof(DOUBLE));
@@ -353,7 +355,6 @@ void run_abm(ABM *abm) {
   DOUBLE *states_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
   DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * (dim +
                                      abm->delayed_idxs_len * (ndelays - 1)));
-  DOUBLE *rk_memory = NULL;
   DOUBLE *dotstates = NULL;
   if (non_zero_delays > 0) {
     dotstates = (DOUBLE *) malloc(sizeof(DOUBLE) * dim *
@@ -377,7 +378,8 @@ void run_abm(ABM *abm) {
           .queue=queue,
           .states=states,
           .states_tmp=states_tmp,
-          .rk_memory=rk_memory
+          .rk_memory=NULL,
+          .inner_rk_memory=NULL
   };
 
   // Setting initial conditions for RK4 solution

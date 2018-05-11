@@ -38,7 +38,7 @@ void calc_difference(RHS f) {
   double t0 = 0;
   double t1 = 5;
   double h = 1 / 16.0;
-  double delay = 0;
+  double delay = 0.096;
   int dim = 4;
 
   int n = (int)(1 + (t1 - t0) / h);
