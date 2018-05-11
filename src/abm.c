@@ -458,6 +458,10 @@ void run_abm(ABM *abm) {
       run_callback = abm->callback(callback_t, callback_state, abm->context);
     }
   }
+  
+  for (int i = 0; i < dim; i++) {
+    abm->final_state[i] = (double) peek_right(queue)[i];
+  }
 
   destroy_abm_data(abm_data);
   free(dotstates);
