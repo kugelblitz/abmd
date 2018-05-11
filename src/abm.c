@@ -287,8 +287,6 @@ void get_delayed_dotstates(ABMData *abm_data, double ti, double t_last,
   }
 }
 
-//#define LONG_RUNGE_KUTTA_HACK
-
 void run_abm(ABM *abm) {
 
   int dim = abm->dim;
@@ -340,9 +338,6 @@ void run_abm(ABM *abm) {
   if (max_positive_delay != 0) {
     extra_steps += interpolation_order - 1;
   }
-#ifdef LONG_RUNGE_KUTTA_HACK  
-  extra_steps += 16 * 5;
-#endif
   int rk4_i1 = abm_order - 1 + extra_steps;
   double rk4_h = h / (double) RK_STEPS_IN_ABM;
   int rk4_n = 1 + rk4_i1 * RK_STEPS_IN_ABM;
@@ -389,7 +384,6 @@ void run_abm(ABM *abm) {
 
   // Doing rk4_n RK4 steps
   for (int i = 1; i < rk4_n; i++) {
-    printf("RK %d/%d\n", i, rk4_n); fflush(stdout);
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
             abm->delayed_idxs, abm->delayed_idxs_len, &abm_data,
@@ -426,23 +420,6 @@ void run_abm(ABM *abm) {
     run_callback = abm->callback(callback_t, callback_state, abm->context);
   }
   
-#ifdef LONG_RUNGE_KUTTA_HACK  
-  for (int i = 0; i < dim; i++) {
-    rk4_sol[i] = init[i];
-  }
-  
-  for (int i = 0; i < rk4_n; i++) {
-    double hh = (t1 - t0) / rk4_n;
-    double tt = t0 + hh * i;
-    rk_step(rhs_rk4, hh, tt, rk4_sol, dim, 1, &abm_data, rk4_sol + dim);
-    memcpy(rk4_sol, rk4_sol + dim, dim * sizeof(DOUBLE));
-  }
-  
-  for (int i = 0; i < dim; i++) {
-    abm->final_state[i] = (double) rk4_sol[i];
-  } 
-#endif
-
   free(rk4_sol);
   free(init);
 
@@ -481,12 +458,6 @@ void run_abm(ABM *abm) {
       run_callback = abm->callback(callback_t, callback_state, abm->context);
     }
   }
-
-#ifndef LONG_RUNGE_KUTTA_HACK
-  for (int i = 0; i < dim; i++) {
-    abm->final_state[i] = (double) peek_right(queue)[i];
-  }
-#endif
 
   destroy_abm_data(abm_data);
   free(dotstates);
