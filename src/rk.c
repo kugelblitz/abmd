@@ -247,11 +247,11 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
 
 void rk_step(RHS f, double h, double t, DOUBLE *state, int dim, int ndelays,
              int *delayed_idxs, int delayed_idxs_len, void *context,
-             DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory, char *method) {
-  if (strcmp(method, "dopri8") == 0) {
+             DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory, int method) {
+  if (method == METHOD_DOPRI8) {
     dopri8_step(f, h, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
                 context, out, rhs_out, memory);
-  } else if (strcmp(method, "rk4") == 0) {
+  } else if (method == METHOD_RK4) {
     rk4_step(f, h, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
              context, out, rhs_out, memory);
   }
