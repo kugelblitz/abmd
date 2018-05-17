@@ -117,7 +117,7 @@ void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
   DOUBLE *out2 = &temp[dim];
 
   if (data->input->f1 != NULL) {
-    data->input->f1(states, dotstates, t, out1, data->input->context);
+    data->input->f1(states, t, out1, data->input->context);
   }
   if (data->input->f2 != NULL) {
     data->input->f2(states, dotstates, t, out2, data->input->context);

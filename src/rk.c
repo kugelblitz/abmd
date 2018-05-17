@@ -92,7 +92,7 @@ void copy_delayed_states(DOUBLE *vec, int dim, int ndelays,
   }
 }
 
-void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
+void rk4_step(RHS2 f, double h, double t, DOUBLE *x, int dim, int ndelays,
               int *delayed_idxs, int delayed_idxs_len, void *context,
               DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
 
@@ -141,7 +141,7 @@ void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
 }
 
 
-void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
+void dopri8_step(RHS2 f, double h, double t, DOUBLE *x, int dim, int ndelays,
                  int *delayed_idxs, int delayed_idxs_len, void *context,
                  DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
 
@@ -245,7 +245,7 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, int ndelays,
   memcpy(out, k5, dim * sizeof(DOUBLE));
 }
 
-void rk_step(RHS f, double h, double t, DOUBLE *state, int dim, int ndelays,
+void rk_step(RHS2 f, double h, double t, DOUBLE *state, int dim, int ndelays,
              int *delayed_idxs, int delayed_idxs_len, void *context,
              DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory, int method) {
   if (method == METHOD_DOPRI8) {
