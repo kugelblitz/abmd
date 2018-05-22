@@ -423,13 +423,6 @@ void run_abm(ABM *abm) {
   free(rk4_sol);
   free(init);
 
-  // Initializing right-hand sides
-  for (int i = extra_steps; i < k; i++) {
-    get_delayed_states(&abm_data, t0 + i * h, rk4_t1, states);
-    get_delayed_dotstates(&abm_data, t0 + i * h, rk4_t1, 1, dotstates);
-    DOUBLE *address = &get(queue, i)[dim];
-    rhs(states, dotstates, t0 + i * h, address, &abm_data);
-  }
 
   // If ABM_ORDER = 2: rk4_t1 = 2000, t = 4000
   int start_index = rk4_i1 + 1;
