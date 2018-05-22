@@ -423,8 +423,7 @@ void run_abm(ABM *abm) {
   free(rk4_sol);
   free(init);
 
-
-  // If ABM_ORDER = 2: rk4_t1 = 2000, t = 4000
+  // Main ABM loop
   int start_index = rk4_i1 + 1;
   for (int i = start_index; i < n; i++) {
     double t = t0 + i * h;

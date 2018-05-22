@@ -15,8 +15,7 @@ typedef double DOUBLE;
 
 typedef struct _ABM ABM;
 
-typedef void (*RHS1)(DOUBLE states[],
-                     double t, DOUBLE *out, void *context);
+typedef void (*RHS1)(DOUBLE states[], double t, DOUBLE *out, void *context);
 
 typedef void (*RHS2)(DOUBLE states[], DOUBLE dotstates[],
                      double t, DOUBLE *out, void *context);
