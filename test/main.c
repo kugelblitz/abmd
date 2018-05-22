@@ -32,7 +32,7 @@ int callback_back(double *t, double *state, void *context) {
   return 1;
 }
 
-void calc_difference(RHS f) {
+void calc_difference(RHS1 f) {
   int order = 11;
   double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
@@ -102,8 +102,7 @@ void calc_difference(RHS f) {
   free(diff);
 }
 
-void orbit(DOUBLE states[], DOUBLE dotstates[], double t,
-           DOUBLE *out, void *context) {
+void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
   int dim = 4;
   const DOUBLE G = 0.49821740236800005;
   const double m1 = 5.972e24;
