@@ -316,36 +316,21 @@ void run_abm(ABM *abm) {
 
   int RK_STEPS_IN_ABM = 8;
 
-  int interpolation_order = abm->interpolation_order;
-
   int non_zero_delays = 0;
-  double max_positive_delay = 0;
-  double max_negative_delay = 0;
   for (int i = 0; i < ndelays; i++) {
     if (delays[i] != 0) non_zero_delays += 1;
-    if (delays[i] > max_positive_delay) {
-      max_positive_delay = delays[i];
-    }
-    if (delays[i] < max_negative_delay) {
-      max_negative_delay = delays[i];
-    }
   }
 
   int n = (int)(1 + (t1 - t0) / h);
-  int extra_steps = fmod(max_positive_delay, h) ?
-                    (int)(max_positive_delay / h) + 1 :
-                    (int)(max_positive_delay / h);
-  if (max_positive_delay != 0) {
-    extra_steps += interpolation_order - 1;
-  }
-  int rk4_i1 = abm_order - 1 + extra_steps;
+  int rk4_i1 = abm_order - 1;
+  rk4_i1 += 1;  // One more step to fill the whole queue with RK data
   double rk4_h = h / (double) RK_STEPS_IN_ABM;
-  int rk4_n = 1 + rk4_i1 * RK_STEPS_IN_ABM;
+  int rk4_n = rk4_i1 * RK_STEPS_IN_ABM;
   double rk4_t1 = t0 + rk4_i1 * h;
 
-
-  DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk4_n * dim);
-  DOUBLE *rk4_rhss = (DOUBLE *) malloc(sizeof(DOUBLE) * rk4_n * dim);
+  int rk_size = rk4_n + 1;  // One more block to store the initial condition
+  DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
+  DOUBLE *rk4_rhss = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
   DOUBLE *rhs_temp = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * dim);
   DOUBLE *states_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
   DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * (dim +
@@ -356,7 +341,7 @@ void run_abm(ABM *abm) {
                                   abm->delayed_idxs_len * non_zero_delays);
   }
 
-  int queue_size = (int) ceil(rk4_n / (double) RK_STEPS_IN_ABM);
+  int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, 2 * dim);
 
   ABMData abm_data = (ABMData){
@@ -383,7 +368,7 @@ void run_abm(ABM *abm) {
   }
 
   // Doing rk4_n RK4 steps
-  for (int i = 1; i < rk4_n; i++) {
+  for (int i = 1; i < rk4_n + 1; i++) {
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
             abm->delayed_idxs, abm->delayed_idxs_len, &abm_data,
@@ -392,13 +377,13 @@ void run_abm(ABM *abm) {
   }
 
   // Computing last RHS
-  int last = (rk4_n - 1) * dim;
+  int last = rk4_n * dim;
   rhs_rk4(&rk4_sol[last], NULL, t0 + rk4_h * (rk4_n - 1),
           &rk4_rhss[last], &abm_data);
 
   // Writing data from RK4 to the queue
   int k = 0;
-  for (int i = 0; i < rk4_n; i += RK_STEPS_IN_ABM) {
+  for (int i = 0; i < rk4_n + 1; i += RK_STEPS_IN_ABM) {
     DOUBLE *sol_address = push(queue);
     memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(DOUBLE));
     memcpy(&sol_address[dim], &rk4_rhss[i * dim], dim * sizeof(DOUBLE));
