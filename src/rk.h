@@ -1,8 +1,7 @@
 #ifndef DDE_RK_H
 #define DDE_RK_H
 
-enum
-{
+enum {
   METHOD_DOPRI8 = 1,
   METHOD_RK4 = 2
 };
