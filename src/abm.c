@@ -13,8 +13,6 @@
 
 typedef struct {
   ABM *input;
-  DOUBLE *predictor_coeffs;
-  DOUBLE *corrector_coeffs;
   double *interp_xs;
   DOUBLE *interp_ys;
   double *extrap_xs;
