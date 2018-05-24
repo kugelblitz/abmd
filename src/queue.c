@@ -32,6 +32,9 @@ Queue *create_queue(int capacity, int block_size) {
 
 void destroy_queue(Queue *queue) {
   free(queue->array);
+  free(queue->diffs);
+  free(queue->pdiffs);
+  free(queue->temp);
   free(queue);
 }
 

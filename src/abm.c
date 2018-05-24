@@ -422,6 +422,7 @@ void run_abm(ABM *abm) {
 
   destroy_abm_data(abm_data);
   free(dotstates);
+  free(backup);
   free(callback_state);
   free(callback_state_l);
 }
