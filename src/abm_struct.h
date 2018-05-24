@@ -4,8 +4,8 @@
 #include "abm.h"
 
 struct _ABM {
-  void (*f1)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *);
-  void (*f2)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *);
+  RHS1 f1;
+  RHS2 f2;
   int dim;
   double t0;
   double t1;
@@ -21,6 +21,8 @@ struct _ABM {
   void (*init_call)(DOUBLE[], void*);
   double *callback_t;
   int (*callback)(double *t, double state[], void *context);
+  int *delayed_idxs;
+  int delayed_idxs_len;
 };
 
 #endif //DDE_ABM_STRUCT_H

@@ -4,18 +4,18 @@
 #include "abm.h"
 #include "rk.h"
 
-DOUBLE c2  = 0.526001519587677318785587544488E-01L,
-       c3  = 0.789002279381515978178381316732E-01L,
-       c4  = 0.118350341907227396726757197510E+00L,
-       c5  = 0.281649658092772603273242802490E+00L,
-       c6  = 0.333333333333333333333333333333E+00L,
-       c7  = 0.25E+00L,
-       c8  = 0.307692307692307692307692307692E+00L,
-       c9  = 0.651282051282051282051282051282E+00L,
-       c10 = 0.6E+00L,
-       c11 = 0.857142857142857142857142857142E+00L,
+double c2  = 0.526001519587677318785587544488E-01,
+       c3  = 0.789002279381515978178381316732E-01,
+       c4  = 0.118350341907227396726757197510E+00,
+       c5  = 0.281649658092772603273242802490E+00,
+       c6  = 0.333333333333333333333333333333E+00,
+       c7  = 0.25E+00,
+       c8  = 0.307692307692307692307692307692E+00,
+       c9  = 0.651282051282051282051282051282E+00,
+       c10 = 0.6E+00,
+       c11 = 0.857142857142857142857142857142E+00;
 
-       b1 =   5.42937341165687622380535766363E-2L,
+DOUBLE b1 =   5.42937341165687622380535766363E-2L,
        b6 =   4.45031289275240888144113950566E0L,
        b7 =   1.89151789931450038304281599044E0L,
        b8 =  -5.8012039600105847814672114227E0L,
@@ -79,11 +79,28 @@ DOUBLE c2  = 0.526001519587677318785587544488E-01L,
        a1211 =  6.43392746015763530355970484046E-1L;
 
 
-void rk4_step(RHS f, double h, double t,
-              DOUBLE *state, int dim, int ndelays, void *context, DOUBLE *out) {
+void copy_delayed_states(DOUBLE *vec, int dim, int ndelays,
+                         int *delayed_idxs, int delayed_idxs_len) {
+  for (int i = 0; i < ndelays - 1; i++) {
+    for (int j = 0; j < delayed_idxs_len; j++) {
+      int idx = j;
+      if (delayed_idxs != NULL) {
+        idx = delayed_idxs[j];
+      }
+      vec[dim + i * delayed_idxs_len + j] = vec[idx];
+    }
+  }
+}
 
-  DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) *
-                                   (4 * dim + dim * ndelays));
+void rk4_step(RHS2 f, double h, double t, DOUBLE *x, int dim, int ndelays,
+              int *delayed_idxs, int delayed_idxs_len, void *context,
+              DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
+
+  if (*memory == NULL) {
+    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (5 * dim +
+                                delayed_idxs_len * (ndelays - 1)));
+  }
+  DOUBLE *data = *memory;
 
   DOUBLE *k1 = data;
   DOUBLE *k2 = &data[dim];
@@ -92,48 +109,47 @@ void rk4_step(RHS f, double h, double t,
 
   DOUBLE *input = &data[dim * 4];
 
-  for (int i = 0; i < ndelays; i++) {
-    memcpy(&input[i * dim], state, dim * sizeof(DOUBLE));
+  memcpy(input, x, dim * sizeof(DOUBLE));
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t, k1, context);
+
+  if (rhs_out != NULL) {
+    memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
   }
-  f(input, t, k1, context);
 
   for (int i = 0; i < dim; i++) {
-    input[i] = state[i] + h * k1[i] / 2;
+    input[i] = x[i] + h * k1[i] / 2;
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + h / 2, k2, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + h / 2, k2, context);
 
   for (int i = 0; i < dim; i++) {
-    input[i] = state[i] + h * k2[i] / 2;
+    input[i] = x[i] + h * k2[i] / 2;
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + h / 2, k3, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + h / 2, k3, context);
 
   for (int i = 0; i < dim; i++) {
-    input[i] = state[i] + h * k3[i];
+    input[i] = x[i] + h * k3[i];
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + h, k4, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + h, k4, context);
 
   for (int i = 0; i < dim; i++) {
-    out[i] = state[i] + h * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
+    out[i] = x[i] + h * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
   }
-  free(data);
 }
 
 
-void dopri8_step(RHS f, double h, double t,
-                 DOUBLE *x, int dim, int ndelays, void *context, DOUBLE *out) {
+void dopri8_step(RHS2 f, double h, double t, DOUBLE *x, int dim, int ndelays,
+                 int *delayed_idxs, int delayed_idxs_len, void *context,
+                 DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
 
-
-  DOUBLE *data = (DOUBLE *) malloc(sizeof(DOUBLE) *
-                                   (10 * dim + dim * ndelays));
+  if (*memory == NULL) {
+    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (11 * dim +
+                                delayed_idxs_len * (ndelays - 1)));
+  }
+  DOUBLE *data = *memory;
 
   DOUBLE *k1 = data;
   DOUBLE *k2 = &data[dim];
@@ -148,97 +164,78 @@ void dopri8_step(RHS f, double h, double t,
 
   DOUBLE *input = &data[dim * 10];
 
-  for (int i = 0; i < ndelays; i++) {
-    memcpy(&input[i * dim], x, dim * sizeof(DOUBLE));
+  memcpy(input, x, dim * sizeof(DOUBLE));
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t, k1, context);
+
+  if (rhs_out != NULL) {
+    memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
   }
-  f(input, t, k1, context);
 
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * a21 * k1[i];
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c2 * h, k2, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c2 * h, k2, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a31 * k1[i] + a32 * k2[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c3 * h, k3, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c3 * h, k3, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a41 * k1[i] + a43 * k3[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c4 * h, k4, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c4 * h, k4, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a51 * k1[i] + a53 * k3[i] + a54 * k4[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c5 * h, k5, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c5 * h, k5, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a61 * k1[i] + a64 * k4[i] + a65 * k5[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c6 * h, k6, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c6 * h, k6, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a71 * k1[i] + a74 * k4[i] +
                            a75 * k5[i] + a76 * k6[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c7 * h, k7, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c7 * h, k7, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a81 * k1[i] + a84 * k4[i] + a85 * k5[i] +
                            a86 * k6[i] + a87 * k7[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c8 * h, k8, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c8 * h, k8, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a91 * k1[i] + a94 * k4[i] + a95 * k5[i] +
                            a96 * k6[i] + a97 * k7[i] + a98 * k8[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c9 * h, k9, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c9 * h, k9, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a101 * k1[i] + a104 * k4[i] + a105 * k5[i] +
                            a106 * k6[i] + a107 * k7[i] +
                            a108 * k8[i] + a109 * k9[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c10 * h, k10, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c10 * h, k10, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a111 * k1[i] + a114 * k4[i] + a115 * k5[i] +
                            a116 * k6[i] + a117 * k7[i] + a118 * k8[i] +
                            a119 * k9[i] + a1110 * k10[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + c11 * h, k2, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + c11 * h, k2, context);
   for (int i = 0; i < dim; i++) {
     input[i] = x[i] + h * (a121 * k1[i] + a124 * k4[i] + a125 * k5[i] +
                              a126 * k6[i] + a127 * k7[i] + a128 * k8[i] +
                              a129 * k9[i] + a1210 * k10[i] + a1211 * k2[i]);
   }
-  for (int i = 1; i < ndelays; i++) {
-    memcpy(&input[i * dim], input, sizeof(DOUBLE) * dim);
-  }
-  f(input, t + h, k3, context);
+  copy_delayed_states(input, dim, ndelays, delayed_idxs, delayed_idxs_len);
+  f(input, NULL, t + h, k3, context);
   for (int i = 0; i < dim; i++) {
     k4[i] = b1 * k1[i] + b6 * k6[i] + b7 * k7[i] + b8 * k8[i] + b9 * k9[i] +
             b10 * k10[i] + b11 * k2[i] + b12 * k3[i];
@@ -246,11 +243,16 @@ void dopri8_step(RHS f, double h, double t,
   }
 
   memcpy(out, k5, dim * sizeof(DOUBLE));
-
-  free(data);
 }
 
-void rk_step(RHS f, double h, double t,
-             DOUBLE *state, int dim, int ndelays, void *context, DOUBLE *out) {
-  dopri8_step(f, h, t, state, dim, ndelays, context, out);
+void rk_step(RHS2 f, double h, double t, DOUBLE *state, int dim, int ndelays,
+             int *delayed_idxs, int delayed_idxs_len, void *context,
+             DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory, int method) {
+  if (method == METHOD_DOPRI8) {
+    dopri8_step(f, h, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
+                context, out, rhs_out, memory);
+  } else if (method == METHOD_RK4) {
+    rk4_step(f, h, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
+             context, out, rhs_out, memory);
+  }
 }

@@ -95,7 +95,7 @@ ${OBJECTDIR}/src/queue.o: src/queue.c
 ${OBJECTDIR}/src/rk.o: src/rk.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -I. -Isrc -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/rk.o src/rk.c
+	$(COMPILE.c) -O3 -Wall -s -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/rk.o src/rk.c
 
 # Subprojects
 .build-subprojects:

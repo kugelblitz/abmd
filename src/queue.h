@@ -15,5 +15,7 @@ DOUBLE* push(Queue *q);
 DOUBLE* pop(Queue *q);
 DOUBLE* peek_left(Queue* q);
 DOUBLE* peek_right(Queue* q);
+DOUBLE* get_diff(Queue *q, int i);
+DOUBLE* update_diffs(Queue* q, int predicted);
 
 #endif //DDE_QUEUE_H

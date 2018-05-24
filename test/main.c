@@ -18,7 +18,6 @@ int callback_there(double *t, double *state, void *context) {
   ABMTest *abm_test = (ABMTest *) context;
   int dim = abm_test->dim;
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(double));
-//  printf("%e %e %e\n", *t, state[0], state[2]);
   abm_test->i++;
   t[0] += 1 / 32.0;
   return 1;
@@ -28,19 +27,18 @@ int callback_back(double *t, double *state, void *context) {
   ABMTest *abm_test = (ABMTest *) context;
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state, dim * sizeof(double));
-//  printf("%e %e %e\n", *t, state[0], state[2]);
   abm_test->i++;
   t[0] -= 1 / 32.0;
   return 1;
 }
 
-void calc_difference(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *)) {
+void calc_difference(RHS1 f) {
   int order = 11;
   double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
   double t1 = 5;
   double h = 1 / 16.0;
-  double delay = 0;
+  double delay = 0.096;
   int dim = 4;
 
   int n = (int)(1 + (t1 - t0) / h);
@@ -61,6 +59,7 @@ void calc_difference(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *)) {
   set_delays(abm, (double[]){0, delay}, 2);
   set_callback(abm, callback_there, &callback_t);
   set_context(abm, &abm_test);
+  set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4);
 
   run_abm(abm);
   printf("Final: %e %e\n", get_final_state(abm)[0], get_final_state(abm)[2]);
@@ -81,20 +80,19 @@ void calc_difference(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *)) {
   set_context(abm, &abm_test);
   callback_t = t1;
   abm_test.i = 0;
+  set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4);
 
   run_abm(abm);
   destroy_abm(abm);
-  double *diff = malloc(sizeof(double) * sol_size);
+  double *diff = malloc(sizeof(double) * sol_size * 2);
 
   for (int i = 0; i < sol_size; i++) {
     double x1 = sol_reversed[i * dim];
     double x2 = sol_back[i * dim];
     double y1 = sol_reversed[i * dim + 2];
     double y2 = sol_back[i * dim + 2];
-//    printf("(%.16f, %.16f) (%.16f, %.16f)\n", x1, y1, x2, y2);
     diff[i * 2] = t0 + i * h;
     diff[i * 2 + 1] = (double) sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-//    printf("%e\n", diff[i * 2 + 1]);
   }
 
   plot("diff.png", diff, 2, sol_size);
@@ -104,8 +102,7 @@ void calc_difference(void (*f)(DOUBLE *, DOUBLE *, double, DOUBLE *, void *)) {
   free(diff);
 }
 
-void orbit(DOUBLE states[], DOUBLE dotstates[], double t,
-           DOUBLE *out, void *context) {
+void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
   int dim = 4;
   const DOUBLE G = 0.49821740236800005;
   const double m1 = 5.972e24;
@@ -122,8 +119,8 @@ void orbit(DOUBLE states[], DOUBLE dotstates[], double t,
   out[1] = -q * x / (r * r * r);
   out[2] = vy;
   out[3] = -q * y / (r * r * r);
-  DOUBLE x_delayed = states[dim];
-  DOUBLE y_delayed = states[dim + 2];
+  DOUBLE x_delayed = states[4];
+  DOUBLE y_delayed = states[5];
   const int ae = 6371000;
   const double k2 = 0.335;
   DOUBLE c = -(3 * k2 * mu2 / (r * r * r)) * (1 + mu2 / mu1) * (pow(ae / r, 5));

@@ -13,8 +13,6 @@
 
 typedef struct {
   ABM *input;
-  DOUBLE *predictor_coeffs;
-  DOUBLE *corrector_coeffs;
   double *interp_xs;
   DOUBLE *interp_ys;
   double *extrap_xs;
@@ -23,17 +21,23 @@ typedef struct {
   double rk4_h;
   DOUBLE *temp;
   Queue *queue;
+  DOUBLE *states;
+  DOUBLE *states_tmp;
+  DOUBLE *rk_memory;
+  DOUBLE *inner_rk_memory;
 } ABMData;
 
 void destroy_abm_data(ABMData abm_data) {
-  free(abm_data.predictor_coeffs);
-  free(abm_data.corrector_coeffs);
   free(abm_data.interp_xs);
   free(abm_data.interp_ys);
   free(abm_data.extrap_xs);
   free(abm_data.extrap_ys);
   free(abm_data.lagrange_data);
   free(abm_data.temp);
+  free(abm_data.states);
+  free(abm_data.states_tmp);
+  free(abm_data.rk_memory);
+  free(abm_data.inner_rk_memory);
   destroy_queue(abm_data.queue);
 }
 
@@ -42,9 +46,7 @@ void predict(ABMData *abm_data) {
   int dim = abm_data->input->dim;
   int abm_order = abm_data->input->abm_order;
   double h = abm_data->input->h;
-  DOUBLE *coeffs = abm_data->predictor_coeffs;
   Queue *queue = abm_data->queue;
-  int q_size = get_capacity(queue);
   DOUBLE *temp = abm_data->temp;
 
   pop(queue);
@@ -55,10 +57,10 @@ void predict(ABMData *abm_data) {
   memset(temp, 0, sizeof(DOUBLE) * dim);
 
   for (int j = 0; j < abm_order; j++) {
-    DOUBLE *rhs = &get(queue, q_size - j - 2)[dim];
-    DOUBLE c = coeffs[j];
+    DOUBLE *diff = get_diff(queue, j);
+    DOUBLE c = PREDICTOR_COEFFS[j];
     for (int k = 0; k < dim; k++) {
-      temp[k] += c * h * rhs[k];
+      temp[k] += c * h * diff[k];
     }
   }
 
@@ -67,32 +69,17 @@ void predict(ABMData *abm_data) {
   }
 }
 
-void correct(ABMData *abm_data) {
+void correct(ABMData *abm_data, DOUBLE *diffs) {
 
   int dim = abm_data->input->dim;
   int abm_order = abm_data->input->abm_order;
   double h = abm_data->input->h;
-  DOUBLE *coeffs = abm_data->corrector_coeffs;
   Queue *queue = abm_data->queue;
-  int q_size = get_capacity(queue);
-  DOUBLE *prev = get(queue, q_size - 2);
   DOUBLE *out = peek_right(queue);
-  DOUBLE *temp = abm_data->temp;
 
-  memcpy(out, prev, sizeof(DOUBLE) * dim);
-
-  memset(temp, 0, sizeof(DOUBLE) * dim);
-
-  for (int j = 0; j < abm_order; j++) {
-    DOUBLE *rhs = &get(queue, q_size - j - 1)[dim];
-    DOUBLE c = coeffs[j];
-    for (int k = 0; k < dim; k++) {
-      temp[k] += c * h * rhs[k];
-    }
-  }
-
-  for (int i = 0; i < dim; i++) {
-    out[i] += temp[i];
+  DOUBLE *last_diff = &diffs[abm_order * dim];
+  for (int k = 0; k < dim; k++) {
+    out[k] += h * PREDICTOR_COEFFS[abm_order] * last_diff[k];
   }
 }
 
@@ -109,7 +96,7 @@ void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
   DOUBLE *out2 = &temp[dim];
 
   if (data->input->f1 != NULL) {
-    data->input->f1(states, dotstates, t, out1, data->input->context);
+    data->input->f1(states, t, out1, data->input->context);
   }
   if (data->input->f2 != NULL) {
     data->input->f2(states, dotstates, t, out2, data->input->context);
@@ -125,22 +112,37 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
   ABMData *data = (ABMData *)abm_data;
   int dim = data->input->dim;
   int ndelays = data->input->ndelays;
-  DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
+  int *delayed_idxs = data->input->delayed_idxs;
+  int delayed_idxs_len = data->input->delayed_idxs_len;
+
+  DOUBLE *states_tmp = data->states_tmp;
+  DOUBLE *states = data->states;
+
   for (int i = 0; i < ndelays; i++) {
     double delay = data->input->delays[i];
     if (delay == 0) {
-      memcpy(&states[i * dim], state, dim * sizeof(DOUBLE));
+      memcpy(&states_tmp[i * dim], state, dim * sizeof(DOUBLE));
       continue;
     }
-    rk_step(rhs, -delay, t, state, dim, ndelays,
-            data, &states[i * dim]);
+    rk_step(rhs, -delay, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
+            data, &states_tmp[i * dim], NULL, &data->inner_rk_memory, METHOD_RK4);
   }
+
+  memcpy(states, states_tmp, dim * sizeof(DOUBLE));
+
+  for (int i = 1; i < ndelays; i++) {
+    for (int j = 0; j < delayed_idxs_len; j++) {
+      int idx = delayed_idxs == NULL ? j : delayed_idxs[j];
+      states[dim + (i - 1) * delayed_idxs_len + j] = states_tmp[i * dim + idx];
+    }
+  }
+
   rhs(states, NULL, t, out, data);
-  free(states);
 }
 
 void get_state_at_time(ABMData *abm_data, double t, double t_last,
-                       int derivative, int is_last_defined, DOUBLE *out) {
+                       int derivative, int is_last_defined, int idxs_only,
+                       DOUBLE *out) {
   Queue *queue = abm_data->queue;
   int q_last_idx = get_capacity(queue) - 1;
   int dim = abm_data->input->dim;
@@ -156,11 +158,17 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last,
   }
 
   double steps_diff = (t - t_last) / h;
+
+  int *idxs = abm_data->input->delayed_idxs;
+  int idxs_len = abm_data->input->delayed_idxs_len;
+  int idim = (idxs_only && idxs != NULL) ? idxs_len : dim;
+
   if (steps_diff <= 0) {
     if (!fmod(steps_diff, 1)) {
       DOUBLE *state = get(queue, q_last_idx + (int) steps_diff);
-      for (int i = 0; i < dim; i++) {
-        out[i] = state[i];
+      for (int i = 0; i < idim; i++) {
+        int idx = (idxs_only && idxs != NULL) ? idxs[i] : i;
+        out[i] = state[idx];
       }
       return;
     }
@@ -189,14 +197,16 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last,
     }
     double *xs = abm_data->interp_xs;
     DOUBLE *ys = abm_data->interp_ys;
+
     for (int ii = 0; ii < points_number; ii++) {
       xs[ii] = left_t + ii * h;
       DOUBLE *sol = &get(queue, left_i + ii)[state_idx];
-      for (int jj = 0; jj < dim; jj++) {
-        ys[ii * dim + jj] = sol[jj];
+      for (int jj = 0; jj < idim; jj++) {
+        int idx = (idxs_only && idxs != NULL) ? idxs[jj] : jj;
+        ys[ii * idim + jj] = sol[idx];
       }
     }
-    lagrange(t, xs, ys, dim, points_number, &abm_data->lagrange_data, out);
+    lagrange(t, xs, ys, idim, points_number, &abm_data->lagrange_data, out);
     return;
   }
   // Extrapolation
@@ -213,11 +223,12 @@ void get_state_at_time(ABMData *abm_data, double t, double t_last,
   for (int ii = 0; ii < points_number; ii++) {
     xs[ii] = left_t + ii * h;
     DOUBLE *sol = &get(queue, left_i + ii)[state_idx];
-    for (int jj = 0; jj < dim; jj++) {
-      ys[ii * dim + jj] = sol[jj];
+    for (int jj = 0; jj < idim; jj++) {
+      int idx = (idxs_only && idxs != NULL) ? idxs[jj] : jj;
+      ys[ii * idim + jj] = sol[idx];
     }
   }
-  lagrange(t, xs, ys, dim, points_number, &abm_data->lagrange_data, out);
+  lagrange(t, xs, ys, idim, points_number, &abm_data->lagrange_data, out);
 }
 
 void get_delayed_states(ABMData *abm_data, double ti, double t_last,
@@ -229,7 +240,9 @@ void get_delayed_states(ABMData *abm_data, double ti, double t_last,
   for (int j = 0; j < ndelays; j++) {
     double delay = delays[j];
     double t_delayed = ti - delay;
-    get_state_at_time(abm_data, t_delayed, t_last, 0, -1, &out[j * dim]);
+    int idxs_only = j != 0;
+    get_state_at_time(abm_data, t_delayed, t_last, 0, -1,
+                      idxs_only, &out[j * dim]);
   }
 }
 
@@ -247,13 +260,11 @@ void get_delayed_dotstates(ABMData *abm_data, double ti, double t_last,
     double delay = delays[j];
     if (delay == 0) continue;
     double t_delayed = ti - delay;
-    get_state_at_time(abm_data, t_delayed, t_last, 1, is_last_rhs_defined,
+    get_state_at_time(abm_data, t_delayed, t_last, 1, is_last_rhs_defined, 1,
                       &out[i * dim]);
     i += 1;
   }
 }
-
-//#define LONG_RUNGE_KUTTA_HACK
 
 void run_abm(ABM *abm) {
 
@@ -277,61 +288,38 @@ void run_abm(ABM *abm) {
     abm->init_call(init, abm->context);
   }
 
-  DOUBLE *predictor_coeffs = (DOUBLE *) malloc(sizeof(DOUBLE) * abm_order);
-  DOUBLE *corrector_coeffs = (DOUBLE *) malloc(sizeof(DOUBLE) * abm_order);
-  get_predictor_coeffs(abm_order, predictor_coeffs);
-  get_corrector_coeffs(abm_order, corrector_coeffs);
-
-  int RK_STEPS_IN_ABM = 32;
-
-  int interpolation_order = abm->interpolation_order;
-  int extrapolation_order = abm->extrapolation_order;
+  int RK_STEPS_IN_ABM = 8;
 
   int non_zero_delays = 0;
-  double max_positive_delay = 0;
-  double max_negative_delay = 0;
   for (int i = 0; i < ndelays; i++) {
     if (delays[i] != 0) non_zero_delays += 1;
-    if (delays[i] > max_positive_delay) {
-      max_positive_delay = delays[i];
-    }
-    if (delays[i] < max_negative_delay) {
-      max_negative_delay = delays[i];
-    }
   }
 
   int n = (int)(1 + (t1 - t0) / h);
-  int extra_steps = fmod(max_positive_delay, h) ?
-                    (int)(max_positive_delay / h) + 1 :
-                    (int)(max_positive_delay / h);
-  if (max_positive_delay != 0) {
-    extra_steps += interpolation_order - 1;
-  }
-#ifdef LONG_RUNGE_KUTTA_HACK  
-  extra_steps += 16 * 5;
-#endif
-  int rk4_i1 = abm_order - 1 + extra_steps;
+  int rk4_i1 = abm_order - 1;
+  rk4_i1 += 1;  // One more step to fill the whole queue with RK data
   double rk4_h = h / (double) RK_STEPS_IN_ABM;
-  int rk4_n = 1 + rk4_i1 * RK_STEPS_IN_ABM;
+  int rk4_n = rk4_i1 * RK_STEPS_IN_ABM;
   double rk4_t1 = t0 + rk4_i1 * h;
 
-
-  DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk4_n * dim);
-  DOUBLE *rk4_rhss = (DOUBLE *) malloc(sizeof(DOUBLE) * rk4_n * dim);
+  int rk_size = rk4_n + 1;  // One more block to store the initial condition
+  DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
+  DOUBLE *rk4_rhss = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
   DOUBLE *rhs_temp = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * dim);
-  DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * dim * ndelays);
+  DOUBLE *states_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
+  DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * (dim +
+                                     abm->delayed_idxs_len * (ndelays - 1)));
   DOUBLE *dotstates = NULL;
   if (non_zero_delays > 0) {
-    dotstates = (DOUBLE *) malloc(sizeof(DOUBLE) * dim * non_zero_delays);
+    dotstates = (DOUBLE *) malloc(sizeof(DOUBLE) * dim *
+                                  abm->delayed_idxs_len * non_zero_delays);
   }
 
-  int queue_size = (int) ceil(rk4_n / (double) RK_STEPS_IN_ABM);
+  int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, 2 * dim);
 
   ABMData abm_data = (ABMData){
           .input=abm,
-          .predictor_coeffs=predictor_coeffs,
-          .corrector_coeffs=corrector_coeffs,
           .interp_xs=NULL,
           .interp_ys=NULL,
           .extrap_xs=NULL,
@@ -339,7 +327,11 @@ void run_abm(ABM *abm) {
           .lagrange_data=NULL,
           .rk4_h=rk4_h,
           .temp=rhs_temp,
-          .queue=queue
+          .queue=queue,
+          .states=states,
+          .states_tmp=states_tmp,
+          .rk_memory=NULL,
+          .inner_rk_memory=NULL
   };
 
   // Setting initial conditions for RK4 solution
@@ -347,22 +339,27 @@ void run_abm(ABM *abm) {
     rk4_sol[i] = init[i];
   }
 
-  // Setting initial RHS
-  rhs_rk4(init, NULL, t0, &rk4_rhss[0], &abm_data);
-
   // Doing rk4_n RK4 steps
-  for (int i = 1; i < rk4_n; i++) {
+  for (int i = 1; i < rk4_n + 1; i++) {
     double t = t0 + rk4_h * (i - 1);
     rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
-            &abm_data, &rk4_sol[i * dim]);
+            abm->delayed_idxs, abm->delayed_idxs_len, &abm_data,
+            &rk4_sol[i * dim], &rk4_rhss[(i - 1) * dim], &abm_data.rk_memory,
+            METHOD_DOPRI8);
   }
+
+  // Computing last RHS
+  int last = rk4_n * dim;
+  rhs_rk4(&rk4_sol[last], NULL, t0 + rk4_h * (rk4_n - 1),
+          &rk4_rhss[last], &abm_data);
 
   // Writing data from RK4 to the queue
   int k = 0;
-  for (int i = 0; i < rk4_n; i += RK_STEPS_IN_ABM) {
+  for (int i = 0; i < rk4_n + 1; i += RK_STEPS_IN_ABM) {
     DOUBLE *sol_address = push(queue);
     memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(DOUBLE));
     memcpy(&sol_address[dim], &rk4_rhss[i * dim], dim * sizeof(DOUBLE));
+    update_diffs(queue, 0);
     k++;
   }
   free(rk4_rhss);
@@ -374,42 +371,19 @@ void run_abm(ABM *abm) {
 
   while (run_callback && *callback_t * hsgn <= rk4_t1 * hsgn) {
     get_state_at_time(&abm_data, *callback_t, rk4_t1,
-                      0, -1, callback_state_l);
+                      0, -1, 0, callback_state_l);
     for (int i = 0; i < dim; i++) {
       callback_state[i] = (double) callback_state_l[i];
     }
     run_callback = abm->callback(callback_t, callback_state, abm->context);
   }
   
-#ifdef LONG_RUNGE_KUTTA_HACK  
-  for (int i = 0; i < dim; i++) {
-    rk4_sol[i] = init[i];
-  }
-  
-  for (int i = 0; i < rk4_n; i++) {
-    double hh = (t1 - t0) / rk4_n;
-    double tt = t0 + hh * i;
-    rk_step(rhs_rk4, hh, tt, rk4_sol, dim, 1, &abm_data, rk4_sol + dim);
-    memcpy(rk4_sol, rk4_sol + dim, dim * sizeof(DOUBLE));
-  }
-  
-  for (int i = 0; i < dim; i++) {
-    abm->final_state[i] = (double) rk4_sol[i];
-  } 
-#endif
-
   free(rk4_sol);
   free(init);
 
-  // Initializing right-hand sides
-  for (int i = extra_steps; i < k; i++) {
-    get_delayed_states(&abm_data, t0 + i * h, rk4_t1, states);
-    get_delayed_dotstates(&abm_data, t0 + i * h, rk4_t1, 1, dotstates);
-    DOUBLE *address = &get(queue, i)[dim];
-    rhs(states, dotstates, t0 + i * h, address, &abm_data);
-  }
+  DOUBLE *backup = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
 
-  // If ABM_ORDER = 2: rk4_t1 = 2000, t = 4000
+  // Main ABM loop
   int start_index = rk4_i1 + 1;
   for (int i = start_index; i < n; i++) {
     double t = t0 + i * h;
@@ -420,31 +394,35 @@ void run_abm(ABM *abm) {
     get_delayed_dotstates(&abm_data, t, t, 0, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
-    correct(&abm_data);
+    DOUBLE *diffs = update_diffs(queue, 1);
+    memcpy(backup, peek_right(queue), dim * sizeof(DOUBLE));
+    correct(&abm_data, diffs);
+
     get_delayed_states(&abm_data, t, t, states);
     get_delayed_dotstates(&abm_data, t, t, 1, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
-    correct(&abm_data);
+    diffs = update_diffs(queue, 0);
+    memcpy(peek_right(queue), backup, dim * sizeof(DOUBLE));
+    correct(&abm_data, diffs);
 
     while (run_callback && (t - h) * hsgn < *callback_t * hsgn
                         && *callback_t * hsgn <= t * hsgn) {
-      get_state_at_time(&abm_data, *callback_t, t, 0, -1, callback_state_l);
+      get_state_at_time(&abm_data, *callback_t, t, 0, -1, 0, callback_state_l);
       for (int j = 0; j < dim; j++) {
         callback_state[j] = (double) callback_state_l[j];
       }
       run_callback = abm->callback(callback_t, callback_state, abm->context);
     }
   }
-
-#ifndef LONG_RUNGE_KUTTA_HACK
+  
   for (int i = 0; i < dim; i++) {
     abm->final_state[i] = (double) peek_right(queue)[i];
   }
-#endif
 
   destroy_abm_data(abm_data);
-  free(states);
+  free(dotstates);
+  free(backup);
   free(callback_state);
   free(callback_state_l);
 }
