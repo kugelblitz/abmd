@@ -58,9 +58,9 @@ void predict(ABMData *abm_data) {
 
   for (int j = 0; j < abm_order; j++) {
     DOUBLE *diff = get_diff(queue, j);
-    DOUBLE c = PREDICTOR_COEFFS[j];
+    DOUBLE ch = PREDICTOR_COEFFS[j] * h;
     for (int k = 0; k < dim; k++) {
-      temp[k] += c * h * diff[k];
+      temp[k] += ch * diff[k];
     }
   }
 
@@ -78,8 +78,9 @@ void correct(ABMData *abm_data, DOUBLE *diffs) {
   DOUBLE *out = peek_right(queue);
 
   DOUBLE *last_diff = &diffs[abm_order * dim];
+  DOUBLE ch = h * PREDICTOR_COEFFS[abm_order]
   for (int k = 0; k < dim; k++) {
-    out[k] += h * PREDICTOR_COEFFS[abm_order] * last_diff[k];
+    out[k] += ch * last_diff[k];
   }
 }
 
