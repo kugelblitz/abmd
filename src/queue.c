@@ -1,23 +1,32 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "queue.h"
 
 
 struct _Queue {
-  int head, tail, size;
+  int head, tail, size, dim;
   int capacity, block_size;
   DOUBLE* array;
+  DOUBLE* diffs;
+  DOUBLE* pdiffs;
+  DOUBLE* temp;
 };
 
 Queue *create_queue(int capacity, int block_size) {
+  int dim = block_size / 2;
   Queue* queue = (Queue *) malloc(sizeof(Queue));
   queue->capacity = capacity;
   queue->block_size = block_size;
+  queue->dim = dim;
   queue->head = queue->size = 0;
   queue->tail = block_size * (capacity - 1);
   queue->array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
+  queue->diffs = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
+  queue->pdiffs = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
+  queue->temp = (DOUBLE *) malloc(2 * dim * sizeof(DOUBLE));
   return queue;
 }
 
@@ -76,6 +85,40 @@ DOUBLE* peek_right(Queue* q) {
     return NULL;
   return &q->array[q->tail];
 }
+
+DOUBLE* get_diff(Queue *q, int i) {
+  return &q->diffs[i * q->dim];
+}
+
+DOUBLE* update_diffs(Queue *q, int predicted) {
+  int qsize = q->size;
+  int dim = q->dim;
+  int dim_size = dim * sizeof(DOUBLE);
+  DOUBLE *old = q->temp;
+  DOUBLE *new = &q->temp[dim];
+  memcpy(new, &peek_right(q)[dim], dim_size);
+
+  int ndiffs = is_full(q) ? qsize : qsize + 1;
+
+  DOUBLE *diffs = q->diffs;
+  if (predicted) {
+    memcpy(q->pdiffs, q->diffs, qsize * dim_size);
+    diffs = q->pdiffs;
+  }
+
+  for (int i = 0; i < ndiffs - 1; i++) {
+    DOUBLE *idiff = &diffs[i * dim];
+    memcpy(old, idiff, dim_size);
+    memcpy(idiff, new, dim_size);
+    for (int j = 0; j < dim; j++) {
+      new[j] -= old[j];
+    }
+  }
+
+  memcpy(&diffs[(ndiffs - 1) * dim], new, dim_size);
+  return diffs;
+}
+
 
 int test() {
   Queue* queue = create_queue(4, 2);

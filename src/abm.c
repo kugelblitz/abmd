@@ -30,8 +30,6 @@ typedef struct {
 } ABMData;
 
 void destroy_abm_data(ABMData abm_data) {
-  free(abm_data.predictor_coeffs);
-  free(abm_data.corrector_coeffs);
   free(abm_data.interp_xs);
   free(abm_data.interp_ys);
   free(abm_data.extrap_xs);
@@ -50,9 +48,7 @@ void predict(ABMData *abm_data) {
   int dim = abm_data->input->dim;
   int abm_order = abm_data->input->abm_order;
   double h = abm_data->input->h;
-  DOUBLE *coeffs = abm_data->predictor_coeffs;
   Queue *queue = abm_data->queue;
-  int q_size = get_capacity(queue);
   DOUBLE *temp = abm_data->temp;
 
   pop(queue);
@@ -63,10 +59,10 @@ void predict(ABMData *abm_data) {
   memset(temp, 0, sizeof(DOUBLE) * dim);
 
   for (int j = 0; j < abm_order; j++) {
-    DOUBLE *rhs = &get(queue, q_size - j - 2)[dim];
-    DOUBLE c = coeffs[j];
+    DOUBLE *diff = get_diff(queue, j);
+    DOUBLE c = PREDICTOR_COEFFS[j];
     for (int k = 0; k < dim; k++) {
-      temp[k] += c * h * rhs[k];
+      temp[k] += c * h * diff[k];
     }
   }
 
@@ -75,32 +71,17 @@ void predict(ABMData *abm_data) {
   }
 }
 
-void correct(ABMData *abm_data) {
+void correct(ABMData *abm_data, DOUBLE *diffs) {
 
   int dim = abm_data->input->dim;
   int abm_order = abm_data->input->abm_order;
   double h = abm_data->input->h;
-  DOUBLE *coeffs = abm_data->corrector_coeffs;
   Queue *queue = abm_data->queue;
-  int q_size = get_capacity(queue);
-  DOUBLE *prev = get(queue, q_size - 2);
   DOUBLE *out = peek_right(queue);
-  DOUBLE *temp = abm_data->temp;
 
-  memcpy(out, prev, sizeof(DOUBLE) * dim);
-
-  memset(temp, 0, sizeof(DOUBLE) * dim);
-
-  for (int j = 0; j < abm_order; j++) {
-    DOUBLE *rhs = &get(queue, q_size - j - 1)[dim];
-    DOUBLE c = coeffs[j];
-    for (int k = 0; k < dim; k++) {
-      temp[k] += c * h * rhs[k];
-    }
-  }
-
-  for (int i = 0; i < dim; i++) {
-    out[i] += temp[i];
+  DOUBLE *last_diff = &diffs[abm_order * dim];
+  for (int k = 0; k < dim; k++) {
+    out[k] += h * PREDICTOR_COEFFS[abm_order] * last_diff[k];
   }
 }
 
@@ -309,11 +290,6 @@ void run_abm(ABM *abm) {
     abm->init_call(init, abm->context);
   }
 
-  DOUBLE *predictor_coeffs = (DOUBLE *) malloc(sizeof(DOUBLE) * abm_order);
-  DOUBLE *corrector_coeffs = (DOUBLE *) malloc(sizeof(DOUBLE) * abm_order);
-  get_predictor_coeffs(abm_order, predictor_coeffs);
-  get_corrector_coeffs(abm_order, corrector_coeffs);
-
   int RK_STEPS_IN_ABM = 8;
 
   int non_zero_delays = 0;
@@ -346,8 +322,6 @@ void run_abm(ABM *abm) {
 
   ABMData abm_data = (ABMData){
           .input=abm,
-          .predictor_coeffs=predictor_coeffs,
-          .corrector_coeffs=corrector_coeffs,
           .interp_xs=NULL,
           .interp_ys=NULL,
           .extrap_xs=NULL,
@@ -387,6 +361,7 @@ void run_abm(ABM *abm) {
     DOUBLE *sol_address = push(queue);
     memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(DOUBLE));
     memcpy(&sol_address[dim], &rk4_rhss[i * dim], dim * sizeof(DOUBLE));
+    update_diffs(queue, 0);
     k++;
   }
   free(rk4_rhss);
@@ -408,6 +383,8 @@ void run_abm(ABM *abm) {
   free(rk4_sol);
   free(init);
 
+  DOUBLE *backup = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
+
   // Main ABM loop
   int start_index = rk4_i1 + 1;
   for (int i = start_index; i < n; i++) {
@@ -419,12 +396,17 @@ void run_abm(ABM *abm) {
     get_delayed_dotstates(&abm_data, t, t, 0, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
-    correct(&abm_data);
+    DOUBLE *diffs = update_diffs(queue, 1);
+    memcpy(backup, peek_right(queue), dim * sizeof(DOUBLE));
+    correct(&abm_data, diffs);
+
     get_delayed_states(&abm_data, t, t, states);
     get_delayed_dotstates(&abm_data, t, t, 1, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
-    correct(&abm_data);
+    diffs = update_diffs(queue, 0);
+    memcpy(peek_right(queue), backup, dim * sizeof(DOUBLE));
+    correct(&abm_data, diffs);
 
     while (run_callback && (t - h) * hsgn < *callback_t * hsgn
                         && *callback_t * hsgn <= t * hsgn) {
