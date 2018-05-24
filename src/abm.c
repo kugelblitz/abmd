@@ -78,7 +78,7 @@ void correct(ABMData *abm_data, DOUBLE *diffs) {
   DOUBLE *out = peek_right(queue);
 
   DOUBLE *last_diff = &diffs[abm_order * dim];
-  DOUBLE ch = h * PREDICTOR_COEFFS[abm_order]
+  DOUBLE ch = h * PREDICTOR_COEFFS[abm_order];
   for (int k = 0; k < dim; k++) {
     out[k] += ch * last_diff[k];
   }
