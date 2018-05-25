@@ -115,7 +115,7 @@ int _get_t_index(Queue *q, double t, int last_known) {
 }
 
 void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
-               int dim_start, int is_xdot, DOUBLE *out) {
+               int dim_start, DOUBLE *out) {
   int n = get_capacity(q);
   int dim = q->dim;
   double t0 = q->t0;
@@ -132,7 +132,7 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
   }
 
   double *ws = q->lgr_ws;
-  if (is_xdot) {
+  if (!last_known) {
     ws = q->lgr_ws_nolast;
     n -= 1;
   }
@@ -155,16 +155,16 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
 }
 
 void evaluate_x_all(Queue *q, double t, DOUBLE *out) {
-  _evaluate(q, t, NULL, q->dim, 1, 0, 0, out);
+  _evaluate(q, t, NULL, q->dim, 1, 0, out);
 }
 
 void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out) {
-  _evaluate(q, t, idxs, idxs_len, 1, 0, 0, out);
+  _evaluate(q, t, idxs, idxs_len, 1, 0, out);
 }
 
 void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
                    int last_known, DOUBLE *out) {
-  _evaluate(q, t, idxs, idxs_len, last_known, q->dim, 1, out);
+  _evaluate(q, t, idxs, idxs_len, last_known, q->dim, out);
 }
 
 DOUBLE* get(Queue *q, int block_idx) {
