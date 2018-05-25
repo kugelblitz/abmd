@@ -116,10 +116,6 @@ int _get_t_index(Queue *q, double t, int last_known) {
 
 void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
                int dim_start, DOUBLE *out) {
-  int n = get_capacity(q);
-  int dim = q->dim;
-  double t0 = q->t0;
-  double h = q->h;
 
   int t_idx = _get_t_index(q, t, last_known);
   if (t_idx != -1) {
@@ -131,6 +127,7 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
     return;
   }
 
+  int n = get_capacity(q);
   double *ws = q->lgr_ws;
   if (!last_known) {
     ws = q->lgr_ws_nolast;
@@ -138,15 +135,15 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
   }
 
   DOUBLE *nom = q->lgr_nom;
-  memset(nom, 0, dim * sizeof(DOUBLE));
+  memset(nom, 0, q->dim * sizeof(DOUBLE));
   DOUBLE denom = 0;
   for (int i = 0; i < n; i++) {
-    double ti = t0 + i * h;
-    denom += ws[i] / (t - ti);
+    double tti = t - (q->t0 + i * q->h);
+    denom += ws[i] / tti;
     DOUBLE *x = &get(q, i)[dim_start];
     for (int j = 0; j < idxs_len; j++) {
       int idx = (idxs == NULL) ? j : idxs[j];
-      nom[j] += ws[i] * x[idx] / (t - ti);
+      nom[j] += ws[i] * x[idx] / tti;
     }
   }
   for (int j = 0; j < idxs_len; j++) {
