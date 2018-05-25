@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <math.h>
 
 #include "queue.h"
 
@@ -14,7 +15,9 @@ struct _Queue {
   DOUBLE* diffs;
   DOUBLE* pdiffs;
   DOUBLE* temp;
-  double *_lgr_ws, *_lgr_denom;
+  double *lgr_ws;
+  double *lgr_ws_nolast;
+  DOUBLE *lgr_nom;
 };
 
 Queue *create_queue(int capacity, int block_size) {
@@ -31,8 +34,9 @@ Queue *create_queue(int capacity, int block_size) {
   queue->diffs = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
   queue->pdiffs = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
   queue->temp = (DOUBLE *) malloc(2 * dim * sizeof(DOUBLE));
-  queue->_lgr_ws = (double *) malloc(capacity * sizeof(double));
-  queue->_lgr_denom = (double *) malloc(block_size * sizeof(double));
+  queue->lgr_ws = (double *) malloc(capacity * sizeof(double));
+  queue->lgr_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
+  queue->lgr_nom = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
   return queue;
 }
 
@@ -41,7 +45,9 @@ void destroy_queue(Queue *queue) {
   free(queue->diffs);
   free(queue->pdiffs);
   free(queue->temp);
-  free(queue->_lgr_ws);
+  free(queue->lgr_ws);
+  free(queue->lgr_ws_nolast);
+  free(queue->lgr_nom);
   free(queue);
 }
 
@@ -61,53 +67,104 @@ void set_t0(Queue *q, double t0) {
   q->t0 = t0;
 }
 
-double get_t0(Queue *q) {
-  return q->t0;
-}
-
-void set_step_size(Queue *q, double h) {
-  q->h = h;
-}
-
-double get_step_size(Queue *q) {
-  return q->h;
-}
-
-double _compute_wj(Queue *q, int j) {
+double _compute_wj(Queue *q, int j, int len) {
   /*
    * Computes j-th barycentric Lagrange weight (eq. 3.2)
   */
   double w = 1;
-  int n = get_capacity(q);
-  double h = get_step_size(q);
-  for (int k = 0; k < n; k++) {
+  double h = q->h;
+  for (int k = 0; k < len; k++) {
     if (k == j) continue;
     w /= (j - k) * h;  // ts[j] - ts[k] simplified
   }
   return w;
 }
 
-void _initialize_ws(Queue *q) {
+void _initialize_weights(Queue *q) {
   int n = get_capacity(q);
+  for (int i = 0; i < n - 1; i++) {
+    q->lgr_ws[i] = _compute_wj(q, i, n);
+    q->lgr_ws_nolast[i] = _compute_wj(q, i, n - 1);
+  }
+  q->lgr_ws[n - 1] = _compute_wj(q, n - 1, n);
+}
+
+void set_step(Queue *q, double h) {
+  q->h = h;
+  _initialize_weights(q);
+}
+
+int _get_t_index(Queue *q, double t, int last_known) {
+  double t0 = q->t0;
+  double h = q->h;
+  int n = get_capacity(q);
+  if (!last_known) {
+    n -= 1;
+  }
+  double t1 = t0 + (n - 1) * h;
+  int hsgn = (t1 > t0) - (t1 < t0);
+  t0 *= hsgn;
+  t1 *= hsgn;
+  t *= hsgn;
+  h *= hsgn;
+
+  if (t0 <= t && t <= t1 && fmod((t - t0), h) < 1e-13) {
+    return (int) round((t - t0) / h);
+  }
+  return -1;
+}
+
+void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
+               int dim_start, int is_xdot, DOUBLE *out) {
+  int n = get_capacity(q);
+  int dim = q->dim;
+  double t0 = q->t0;
+  double h = q->h;
+
+  int t_idx = _get_t_index(q, t, last_known);
+  if (t_idx != -1) {
+    DOUBLE *x = get(q, t_idx);
+    for (int j = 0; j < idxs_len; j++) {
+      int idx = (idxs == NULL) ? j : idxs[j];
+      out[j] = x[idx];
+    }
+    return;
+  }
+
+  double *ws = q->lgr_ws;
+  if (is_xdot) {
+    ws = q->lgr_ws_nolast;
+    n -= 1;
+  }
+
+  DOUBLE *nom = q->lgr_nom;
+  memset(nom, 0, dim * sizeof(DOUBLE));
+  DOUBLE denom = 0;
   for (int i = 0; i < n; i++) {
-    q->_lgr_ws[i] = _compute_wj(q, i);
+    double ti = t0 + i * h;
+    denom += ws[i] / (t - ti);
+    DOUBLE *x = &get(q, i)[dim_start];
+    for (int j = 0; j < idxs_len; j++) {
+      int idx = (idxs == NULL) ? j : idxs[j];
+      nom[j] += ws[i] * x[idx] / (t - ti);
+    }
+  }
+  for (int j = 0; j < idxs_len; j++) {
+    out[j] = nom[j] / denom;
   }
 }
 
-void evaluate(Queue *q, double t, double *out) {
-  int n = get_capacity(q);
-  int dim = q->block_size;
-  double t0 = get_t0(q);
-  double h = get_step_size(q);
-  DOUBLE *nom = malloc(dim * sizeof(DOUBLE));
-  DOUBLE denom = 0;
-  for (int j = 0; j < n; j++) {
-    denom += q->_lgr_ws[j] / (t - t0 - j * h);
-    DOUBLE *block = get(q, j);
-    for (int i = 0; i < dim; i++) {
-      nom[i] += q->_lgr_ws[j] * block[i] / (t - t0 - j * h);
-    }
-  }
+void evaluate_x_all(Queue *q, double t, DOUBLE *out) {
+  _evaluate(q, t, NULL, q->dim, 1, 0, 0, out);
+}
+
+void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out) {
+  _evaluate(q, t, idxs, idxs_len, 1, 0, 0, out);
+}
+
+void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
+                   int last_known, DOUBLE *out) {
+  _evaluate(q, t, idxs, idxs_len, last_known, q->dim, 1, out);
 }
 
 DOUBLE* get(Queue *q, int block_idx) {
@@ -134,6 +191,7 @@ DOUBLE* pop(Queue *q) {
   DOUBLE *address = &q->array[q->head];
   q->head = (q->head + q->block_size) % (q->block_size * q->capacity);
   q->size = q->size - 1;
+  q->t0 += q->h;
   return address;
 }
 
@@ -223,4 +281,32 @@ int test() {
 
   printf("Queue tests passed");
   return 0;
+}
+
+int main_() {
+  int qsize = 3;
+  int dim = 2;
+  Queue *q = create_queue(qsize, dim * 2);
+  set_step(q, -1);
+  set_t0(q, 0);
+  DOUBLE *one = push(q);
+  DOUBLE *two = push(q);
+  DOUBLE *three = push(q);
+  one[0] = 0;
+  one[1] = 16;
+  two[0] = 1;
+  two[1] = 9;
+  three[0] = 4;
+  three[1] = 4;
+
+  DOUBLE *out = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
+  evaluate_x_all(q, -1.5, out);
+  printf("%Le, %Le\n", out[0], out[1]);
+
+  pop(q);
+  DOUBLE *next = push(q);
+  next[0] = 9;
+  next[1] = 1;
+  evaluate_x_all(q, -4, out);
+  printf("%Le, %Le\n", out[0], out[1]);
 }
