@@ -47,25 +47,23 @@ void predict(ABMData *abm_data) {
   int abm_order = abm_data->input->abm_order;
   double h = abm_data->input->h;
   Queue *queue = abm_data->queue;
-  DOUBLE *temp = abm_data->temp;
 
   pop(queue);
   DOUBLE *prev = peek_right(queue);
   DOUBLE *out = push(queue);
-  memcpy(out, prev, sizeof(DOUBLE) * dim);
 
-  memset(temp, 0, sizeof(DOUBLE) * dim);
+  memset(out, 0, sizeof(DOUBLE) * dim);
 
   for (int j = 0; j < abm_order; j++) {
     DOUBLE *diff = get_diff(queue, j);
     DOUBLE ch = PREDICTOR_COEFFS[j] * h;
     for (int k = 0; k < dim; k++) {
-      temp[k] += ch * diff[k];
+      out[k] += ch * diff[k];
     }
   }
 
   for (int i = 0; i < dim; i++) {
-    out[i] += temp[i];
+    out[i] += prev[i];
   }
 }
 
@@ -91,19 +89,23 @@ void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
   int dim = data->input->dim;
   DOUBLE *temp = data->temp;
 
-  memset(temp, 0, sizeof(DOUBLE) * 2 * dim);
-
-  DOUBLE *out1 = &temp[0];
-  DOUBLE *out2 = &temp[dim];
-
+  memset(out, 0, sizeof(DOUBLE) * dim);
+  
   if (data->input->f1 != NULL) {
-    data->input->f1(states, t, out1, data->input->context);
+    data->input->f1(states, t, out, data->input->context);
+    
+    if (data->input->f2 != NULL) {
+      DOUBLE *out2 = &temp[0];
+      
+      memset(out2, 0, sizeof(DOUBLE) * dim);
+      data->input->f2(states, dotstates, t, out2, data->input->context);
+      for (int i = 0; i < dim; i++) {
+        out[i] += out2[i];
+      }
+    }
   }
-  if (data->input->f2 != NULL) {
-    data->input->f2(states, dotstates, t, out2, data->input->context);
-  }
-  for (int i = 0; i < dim; i++) {
-    out[i] = out1[i] + out2[i];
+  else if (data->input->f2 != NULL) {
+    data->input->f2(states, dotstates, t, out, data->input->context);
   }
 }
 
