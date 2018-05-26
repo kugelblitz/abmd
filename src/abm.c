@@ -250,7 +250,7 @@ void run_abm(ABM *abm) {
 
   // Computing last RHS
   int last = rk4_n * dim;
-  rhs_rk4(&rk4_sol[last], NULL, t0 + rk4_h * (rk4_n - 1),
+  rhs_rk4(&rk4_sol[last], NULL, t0 + rk4_h * rk4_n,
           &rk4_rhss[last], &abm_data);
 
   // Writing data from RK4 to the queue
