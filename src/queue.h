@@ -17,5 +17,11 @@ DOUBLE* peek_left(Queue* q);
 DOUBLE* peek_right(Queue* q);
 DOUBLE* get_diff(Queue *q, int i);
 DOUBLE* update_diffs(Queue* q, int predicted);
+void set_t0(Queue *q, double t0);
+void set_step(Queue *q, double h);
+void evaluate_x_all(Queue *q, double t, DOUBLE *out);
+void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out);
+void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
+                   int last_known, DOUBLE *out);
 
 #endif //DDE_QUEUE_H

@@ -7,17 +7,11 @@
 #include "abm_struct.h"
 #include "rk.h"
 #include "coeffs.h"
-#include "poly.h"
 #include "queue.h"
 
 
 typedef struct {
   ABM *input;
-  double *interp_xs;
-  DOUBLE *interp_ys;
-  double *extrap_xs;
-  DOUBLE *extrap_ys;
-  DOUBLE *lagrange_data;
   double rk4_h;
   DOUBLE *temp;
   Queue *queue;
@@ -28,11 +22,6 @@ typedef struct {
 } ABMData;
 
 void destroy_abm_data(ABMData abm_data) {
-  free(abm_data.interp_xs);
-  free(abm_data.interp_ys);
-  free(abm_data.extrap_xs);
-  free(abm_data.extrap_ys);
-  free(abm_data.lagrange_data);
   free(abm_data.temp);
   free(abm_data.states);
   free(abm_data.states_tmp);
@@ -143,99 +132,7 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
   rhs(states, NULL, t, out, data);
 }
 
-void get_state_at_time(ABMData *abm_data, double t, double t_last,
-                       int derivative, int is_last_defined, int idxs_only,
-                       DOUBLE *out) {
-  Queue *queue = abm_data->queue;
-  int q_last_idx = get_capacity(queue) - 1;
-  int dim = abm_data->input->dim;
-  double h = abm_data->input->h;
-
-  int state_idx = 0;
-  if (derivative == 1) {
-    state_idx = dim;
-    if (is_last_defined == 0) {
-      t_last -= h;
-      q_last_idx -= 1;
-    }
-  }
-
-  double steps_diff = (t - t_last) / h;
-
-  int *idxs = abm_data->input->delayed_idxs;
-  int idxs_len = abm_data->input->delayed_idxs_len;
-  int idim = (idxs_only && idxs != NULL) ? idxs_len : dim;
-
-  if (steps_diff <= 0) {
-    if (!fmod(steps_diff, 1)) {
-      DOUBLE *state = get(queue, q_last_idx + (int) steps_diff);
-      for (int i = 0; i < idim; i++) {
-        int idx = (idxs_only && idxs != NULL) ? idxs[i] : i;
-        out[i] = state[idx];
-      }
-      return;
-    }
-    // Interpolation
-    int order = abm_data->input->interpolation_order;
-    int points_number = order + 1;
-    int right_i = q_last_idx + (int) steps_diff;
-    int left_i = right_i - points_number + 1;
-    double right_t = t_last + h * (int) steps_diff;
-    double left_t = right_t - (points_number - 1) * h;
-    if (left_i < 0) {
-      left_t -= (left_i * h);
-      left_i = 0;
-    }
-//    This was supposed to improve interpolation precision, but only seems
-//        to make it worse. More over, it cannot easily be used in current
-//        function, so I'll just leave it like that for now.
-//    if (delay > h) {
-//        left_i += 1;
-//        left_t += h;
-//    }
-    if (abm_data->interp_xs == NULL) {
-      abm_data->interp_xs = (double *) malloc(sizeof(double) * points_number);
-      abm_data->interp_ys = (DOUBLE *) malloc(sizeof(DOUBLE) *
-                                              points_number * dim);
-    }
-    double *xs = abm_data->interp_xs;
-    DOUBLE *ys = abm_data->interp_ys;
-
-    for (int ii = 0; ii < points_number; ii++) {
-      xs[ii] = left_t + ii * h;
-      DOUBLE *sol = &get(queue, left_i + ii)[state_idx];
-      for (int jj = 0; jj < idim; jj++) {
-        int idx = (idxs_only && idxs != NULL) ? idxs[jj] : jj;
-        ys[ii * idim + jj] = sol[idx];
-      }
-    }
-    lagrange(t, xs, ys, idim, points_number, &abm_data->lagrange_data, out);
-    return;
-  }
-  // Extrapolation
-  int points_number = abm_data->input->extrapolation_order + 1;
-  int left_i = q_last_idx - points_number + 1;
-  double left_t = t_last - (points_number - 1) * h;
-  if (abm_data->extrap_xs == NULL) {
-    abm_data->extrap_xs = (double *) malloc(sizeof(double) * points_number);
-    abm_data->extrap_ys = (DOUBLE *) malloc(sizeof(DOUBLE) *
-                                            points_number * dim);
-  }
-  double *xs = abm_data->extrap_xs;
-  DOUBLE *ys = abm_data->extrap_ys;
-  for (int ii = 0; ii < points_number; ii++) {
-    xs[ii] = left_t + ii * h;
-    DOUBLE *sol = &get(queue, left_i + ii)[state_idx];
-    for (int jj = 0; jj < idim; jj++) {
-      int idx = (idxs_only && idxs != NULL) ? idxs[jj] : jj;
-      ys[ii * idim + jj] = sol[idx];
-    }
-  }
-  lagrange(t, xs, ys, idim, points_number, &abm_data->lagrange_data, out);
-}
-
-void get_delayed_states(ABMData *abm_data, double ti, double t_last,
-                        DOUBLE *out) {
+void get_delayed_states(ABMData *abm_data, double ti, DOUBLE *out) {
   int dim = abm_data->input->dim;
   int ndelays = abm_data->input->ndelays;
   double *delays = abm_data->input->delays;
@@ -243,14 +140,17 @@ void get_delayed_states(ABMData *abm_data, double ti, double t_last,
   for (int j = 0; j < ndelays; j++) {
     double delay = delays[j];
     double t_delayed = ti - delay;
-    int idxs_only = j != 0;
-    get_state_at_time(abm_data, t_delayed, t_last, 0, -1,
-                      idxs_only, &out[j * dim]);
+    int all_idxs = (j == 0);
+
+    int *idxs = all_idxs ? NULL : abm_data->input->delayed_idxs;
+    int idxs_len = all_idxs ? dim : abm_data->input->delayed_idxs_len;
+
+    evaluate_x_idxs(abm_data->queue, t_delayed, idxs, idxs_len, &out[j * dim]);
   }
 }
 
-void get_delayed_dotstates(ABMData *abm_data, double ti, double t_last,
-                           int is_last_rhs_defined, DOUBLE *out) {
+void get_delayed_dotstates(ABMData *abm_data, double ti,
+                           int last_known, DOUBLE *out) {
 
   if (out == NULL) return;
 
@@ -263,8 +163,8 @@ void get_delayed_dotstates(ABMData *abm_data, double ti, double t_last,
     double delay = delays[j];
     if (delay == 0) continue;
     double t_delayed = ti - delay;
-    get_state_at_time(abm_data, t_delayed, t_last, 1, is_last_rhs_defined, 1,
-                      &out[i * dim]);
+    evaluate_xdot(abm_data->queue, t_delayed, abm_data->input->delayed_idxs,
+                  abm_data->input->delayed_idxs_len, last_known, &out[i * dim]);
     i += 1;
   }
 }
@@ -320,14 +220,11 @@ void run_abm(ABM *abm) {
 
   int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, 2 * dim);
+  set_t0(queue, t0);
+  set_step(queue, h);
 
   ABMData abm_data = (ABMData){
           .input=abm,
-          .interp_xs=NULL,
-          .interp_ys=NULL,
-          .extrap_xs=NULL,
-          .extrap_ys=NULL,
-          .lagrange_data=NULL,
           .rk4_h=rk4_h,
           .temp=rhs_temp,
           .queue=queue,
@@ -373,8 +270,7 @@ void run_abm(ABM *abm) {
   double *callback_t = abm->callback_t;
 
   while (run_callback && *callback_t * hsgn <= rk4_t1 * hsgn) {
-    get_state_at_time(&abm_data, *callback_t, rk4_t1,
-                      0, -1, 0, callback_state_l);
+    evaluate_x_all(queue, *callback_t, callback_state_l);
     for (int i = 0; i < dim; i++) {
       callback_state[i] = (double) callback_state_l[i];
     }
@@ -393,16 +289,16 @@ void run_abm(ABM *abm) {
 
     predict(&abm_data);
     DOUBLE *rhs_out = &peek_right(queue)[dim];
-    get_delayed_states(&abm_data, t, t, states);
-    get_delayed_dotstates(&abm_data, t, t, 0, dotstates);
+    get_delayed_states(&abm_data, t, states);
+    get_delayed_dotstates(&abm_data, t, 0, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
     DOUBLE *diffs = update_diffs(queue, 1);
     memcpy(backup, peek_right(queue), dim * sizeof(DOUBLE));
     correct(&abm_data, diffs);
 
-    get_delayed_states(&abm_data, t, t, states);
-    get_delayed_dotstates(&abm_data, t, t, 1, dotstates);
+    get_delayed_states(&abm_data, t, states);
+    get_delayed_dotstates(&abm_data, t, 1, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
     diffs = update_diffs(queue, 0);
@@ -411,7 +307,7 @@ void run_abm(ABM *abm) {
 
     while (run_callback && (t - h) * hsgn < *callback_t * hsgn
                         && *callback_t * hsgn <= t * hsgn) {
-      get_state_at_time(&abm_data, *callback_t, t, 0, -1, 0, callback_state_l);
+      evaluate_x_all(queue, *callback_t, callback_state_l);
       for (int j = 0; j < dim; j++) {
         callback_state[j] = (double) callback_state_l[j];
       }

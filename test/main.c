@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #include "abm.h"
 #include "plot.h"
@@ -131,6 +132,11 @@ void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
 
 
 int main() {
+  clock_t t;
+  t = clock();
   calc_difference(orbit);
+  t = clock() - t;
+  double secs = ((double) t) / CLOCKS_PER_SEC;
+  printf("Finished in %f seconds\n", secs);
   return 0;
 }
