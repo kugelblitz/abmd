@@ -143,12 +143,15 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
     double tti = t - (q->t0 + i * q->h);
     denom += ws[i] / tti;
     DOUBLE *x = &get(q, i)[dim_start];
-    if (idxs == NULL)
-      for (int j = 0; j < idxs_len; j++)
+    if (idxs == NULL) {
+      for (int j = 0; j < idxs_len; j++) {
         nom[j] += ws[i] * x[j] / tti;
-    else
-      for (int j = 0; j < idxs_len; j++)
+      }
+    } else {
+      for (int j = 0; j < idxs_len; j++) {
         nom[j] += ws[i] * x[idxs[j]] / tti;
+      }
+    }
   }
   for (int j = 0; j < idxs_len; j++) {
     out[j] = nom[j] / denom;
