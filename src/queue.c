@@ -120,10 +120,12 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
   int t_idx = _get_t_index(q, t, last_known);
   if (t_idx != -1) {
     DOUBLE *x = get(q, t_idx);
-    for (int j = 0; j < idxs_len; j++) {
-      int idx = (idxs == NULL) ? j : idxs[j];
-      out[j] = x[idx];
-    }
+    if (idxs == NULL)
+      memcpy(out, x, idxs_len * sizeof(DOUBLE));
+    else
+      for (int j = 0; j < idxs_len; j++) {
+        out[j] = x[idxs[j]];
+      }
     return;
   }
 
@@ -141,9 +143,14 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
     double tti = t - (q->t0 + i * q->h);
     denom += ws[i] / tti;
     DOUBLE *x = &get(q, i)[dim_start];
-    for (int j = 0; j < idxs_len; j++) {
-      int idx = (idxs == NULL) ? j : idxs[j];
-      nom[j] += ws[i] * x[idx] / tti;
+    if (idxs == NULL) {
+      for (int j = 0; j < idxs_len; j++) {
+        nom[j] += ws[i] * x[j] / tti;
+      }
+    } else {
+      for (int j = 0; j < idxs_len; j++) {
+        nom[j] += ws[i] * x[idxs[j]] / tti;
+      }
     }
   }
   for (int j = 0; j < idxs_len; j++) {
