@@ -219,22 +219,20 @@ DOUBLE* update_diffs(Queue *q, int predicted) {
   int ndiffs = is_full(q) ? qsize : qsize + 1;
 
   DOUBLE *diffs = q->diffs;
-  if (predicted) {
-    memcpy(q->pdiffs, q->diffs, qsize * dim_size);
-    diffs = q->pdiffs;
-  }
+  DOUBLE *diffs_out = predicted ? q->pdiffs : q->diffs;
 
   for (int i = 0; i < ndiffs - 1; i++) {
     DOUBLE *idiff = &diffs[i * dim];
+    DOUBLE *idiff_out = &diffs_out[i * dim];
     memcpy(old, idiff, dim_size);
-    memcpy(idiff, new, dim_size);
+    memcpy(idiff_out, new, dim_size);
     for (int j = 0; j < dim; j++) {
       new[j] -= old[j];
     }
   }
 
-  memcpy(&diffs[(ndiffs - 1) * dim], new, dim_size);
-  return diffs;
+  memcpy(&diffs_out[(ndiffs - 1) * dim], new, dim_size);
+  return diffs_out;
 }
 
 
