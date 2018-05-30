@@ -11,7 +11,7 @@
 
 
 typedef struct {
-  ABM *input;
+  ABM input;
   double rk4_h;
   DOUBLE *temp;
   Queue *queue;
@@ -32,9 +32,9 @@ void destroy_abm_data(ABMData abm_data) {
 
 void predict(ABMData *abm_data) {
 
-  int dim = abm_data->input->dim;
-  int abm_order = abm_data->input->abm_order;
-  double h = abm_data->input->h;
+  int dim = abm_data->input.dim;
+  int abm_order = abm_data->input.abm_order;
+  double h = abm_data->input.h;
   Queue *queue = abm_data->queue;
 
   pop(queue);
@@ -58,9 +58,9 @@ void predict(ABMData *abm_data) {
 
 void correct(ABMData *abm_data, DOUBLE *diffs) {
 
-  int dim = abm_data->input->dim;
-  int abm_order = abm_data->input->abm_order;
-  double h = abm_data->input->h;
+  int dim = abm_data->input.dim;
+  int abm_order = abm_data->input.abm_order;
+  double h = abm_data->input.h;
   Queue *queue = abm_data->queue;
   DOUBLE *out = peek_right(queue);
 
@@ -75,26 +75,26 @@ void correct(ABMData *abm_data, DOUBLE *diffs) {
 void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
          DOUBLE *out, void *abm_data) {
   ABMData *data = (ABMData *)abm_data;
-  int dim = data->input->dim;
+  int dim = data->input.dim;
   DOUBLE *temp = data->temp;
 
   memset(out, 0, sizeof(DOUBLE) * dim);
   
-  if (data->input->f1 != NULL) {
-    data->input->f1(states, t, out, data->input->context);
+  if (data->input.f1 != NULL) {
+    data->input.f1(states, t, out, data->input.context);
     
-    if (data->input->f2 != NULL) {
+    if (data->input.f2 != NULL) {
       DOUBLE *out2 = &temp[0];
       
       memset(out2, 0, sizeof(DOUBLE) * dim);
-      data->input->f2(states, dotstates, t, out2, data->input->context);
+      data->input.f2(states, dotstates, t, out2, data->input.context);
       for (int i = 0; i < dim; i++) {
         out[i] += out2[i];
       }
     }
   }
-  else if (data->input->f2 != NULL) {
-    data->input->f2(states, dotstates, t, out, data->input->context);
+  else if (data->input.f2 != NULL) {
+    data->input.f2(states, dotstates, t, out, data->input.context);
   }
 }
 
@@ -102,16 +102,16 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
              DOUBLE *out, void *abm_data) {
 
   ABMData *data = (ABMData *)abm_data;
-  int dim = data->input->dim;
-  int ndelays = data->input->ndelays;
-  int *delayed_idxs = data->input->delayed_idxs;
-  int delayed_idxs_len = data->input->delayed_idxs_len;
+  int dim = data->input.dim;
+  int ndelays = data->input.ndelays;
+  int *delayed_idxs = data->input.delayed_idxs;
+  int delayed_idxs_len = data->input.delayed_idxs_len;
 
   DOUBLE *states_tmp = data->states_tmp;
   DOUBLE *states = data->states;
 
   for (int i = 0; i < ndelays; i++) {
-    double delay = data->input->delays[i];
+    double delay = data->input.delays[i];
     if (delay == 0) {
       memcpy(&states_tmp[i * dim], state, dim * sizeof(DOUBLE));
       continue;
@@ -133,17 +133,17 @@ void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
 }
 
 void get_delayed_states(ABMData *abm_data, double ti, DOUBLE *out) {
-  int dim = abm_data->input->dim;
-  int ndelays = abm_data->input->ndelays;
-  double *delays = abm_data->input->delays;
+  int dim = abm_data->input.dim;
+  int ndelays = abm_data->input.ndelays;
+  double *delays = abm_data->input.delays;
 
   for (int j = 0; j < ndelays; j++) {
     double delay = delays[j];
     double t_delayed = ti - delay;
     int all_idxs = (j == 0);
 
-    int *idxs = all_idxs ? NULL : abm_data->input->delayed_idxs;
-    int idxs_len = all_idxs ? dim : abm_data->input->delayed_idxs_len;
+    int *idxs = all_idxs ? NULL : abm_data->input.delayed_idxs;
+    int idxs_len = all_idxs ? dim : abm_data->input.delayed_idxs_len;
 
     evaluate_x_idxs(abm_data->queue, t_delayed, idxs, idxs_len, &out[j * dim]);
   }
@@ -154,17 +154,17 @@ void get_delayed_dotstates(ABMData *abm_data, double ti,
 
   if (out == NULL) return;
 
-  int dim = abm_data->input->dim;
-  int ndelays = abm_data->input->ndelays;
-  double *delays = abm_data->input->delays;
+  int dim = abm_data->input.dim;
+  int ndelays = abm_data->input.ndelays;
+  double *delays = abm_data->input.delays;
 
   int i = 0;
   for (int j = 0; j < ndelays; j++) {
     double delay = delays[j];
     if (delay == 0) continue;
     double t_delayed = ti - delay;
-    evaluate_xdot(abm_data->queue, t_delayed, abm_data->input->delayed_idxs,
-                  abm_data->input->delayed_idxs_len, last_known, &out[i * dim]);
+    evaluate_xdot(abm_data->queue, t_delayed, abm_data->input.delayed_idxs,
+                  abm_data->input.delayed_idxs_len, last_known, &out[i * dim]);
     i += 1;
   }
 }
@@ -224,7 +224,7 @@ void run_abm(ABM *abm) {
   set_step(queue, h);
 
   ABMData abm_data = (ABMData){
-          .input=abm,
+          .input=*abm,
           .rk4_h=rk4_h,
           .temp=rhs_temp,
           .queue=queue,
