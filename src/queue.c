@@ -12,8 +12,8 @@ struct _Queue {
   int head, tail, size, dim;
   int capacity, block_size;
   DOUBLE* array;
-  DOUBLE* diffs;
-  DOUBLE* pdiffs;
+  DOUBLE* diffs_r;
+  DOUBLE* diffs_w;
   DOUBLE* temp;
   double *lgr_ws;
   double *lgr_ws_nolast;
@@ -31,9 +31,9 @@ Queue *create_queue(int capacity, int block_size) {
   queue->head = queue->size = 0;
   queue->tail = block_size * (capacity - 1);
   queue->array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
-  queue->diffs = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
-  queue->pdiffs = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
-  queue->temp = (DOUBLE *) malloc(2 * dim * sizeof(DOUBLE));
+  queue->diffs_r = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
+  queue->diffs_w = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
+  queue->temp = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
   queue->lgr_ws = (double *) malloc(capacity * sizeof(double));
   queue->lgr_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
   queue->lgr_nom = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
@@ -42,8 +42,8 @@ Queue *create_queue(int capacity, int block_size) {
 
 void destroy_queue(Queue *queue) {
   free(queue->array);
-  free(queue->diffs);
-  free(queue->pdiffs);
+  free(queue->diffs_r);
+  free(queue->diffs_w);
   free(queue->temp);
   free(queue->lgr_ws);
   free(queue->lgr_ws_nolast);
@@ -185,7 +185,7 @@ DOUBLE* push(Queue *q) {
   if (is_full(q))
     return NULL;
   q->tail = (q->tail + q->block_size) % (q->block_size * q->capacity);
-  q->size = q->size + 1;
+  q->size += 1;
   return &(q->array[q->tail]);
 }
 
@@ -194,7 +194,7 @@ DOUBLE* pop(Queue *q) {
     return NULL;
   DOUBLE *address = &q->array[q->head];
   q->head = (q->head + q->block_size) % (q->block_size * q->capacity);
-  q->size = q->size - 1;
+  q->size -= 1;
   q->t0 += q->h;
   return address;
 }
@@ -211,35 +211,40 @@ DOUBLE* peek_right(Queue* q) {
   return &q->array[q->tail];
 }
 
-DOUBLE* get_diff(Queue *q, int i) {
-  return &q->diffs[i * q->dim];
+DOUBLE* get_diff_r(Queue *q, int i) {
+  return &q->diffs_r[i * q->dim];
 }
 
-DOUBLE* update_diffs(Queue *q, int predicted) {
+DOUBLE* get_diff_w(Queue *q, int i) {
+  return &q->diffs_w[i * q->dim];
+}
+
+void swap_diffs(Queue *q) {
+  DOUBLE *diffs_r = q->diffs_r;
+  q->diffs_r = q->diffs_w;
+  q->diffs_w = diffs_r;
+}
+
+DOUBLE* update_diffs(Queue *q) {
   int qsize = q->size;
   int dim = q->dim;
   int dim_size = dim * sizeof(DOUBLE);
-  DOUBLE *old = q->temp;
-  DOUBLE *new = &q->temp[dim];
+  DOUBLE *new = q->temp;
   memcpy(new, &peek_right(q)[dim], dim_size);
 
   int ndiffs = is_full(q) ? qsize : qsize + 1;
 
-  DOUBLE *diffs = q->diffs;
-  DOUBLE *diffs_out = predicted ? q->pdiffs : q->diffs;
-
   for (int i = 0; i < ndiffs - 1; i++) {
-    DOUBLE *idiff = &diffs[i * dim];
-    DOUBLE *idiff_out = &diffs_out[i * dim];
-    memcpy(old, idiff, dim_size);
-    memcpy(idiff_out, new, dim_size);
+    DOUBLE *idiff_r = &q->diffs_r[i * dim];
+    DOUBLE *idiff_w = &q->diffs_w[i * dim];
+    memcpy(idiff_w, new, dim_size);
     for (int j = 0; j < dim; j++) {
-      new[j] -= old[j];
+      new[j] -= idiff_r[j];
     }
   }
 
-  memcpy(&diffs_out[(ndiffs - 1) * dim], new, dim_size);
-  return diffs_out;
+  memcpy(&q->diffs_w[(ndiffs - 1) * dim], new, dim_size);
+  return q->diffs_w;
 }
 
 

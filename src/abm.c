@@ -66,7 +66,7 @@ void predict(ABMData *abm_data) {
   memset(out, 0, sizeof(DOUBLE) * dim);
 
   for (int j = 0; j < abm_order; j++) {
-    DOUBLE *diff = get_diff(queue, j);
+    DOUBLE *diff = get_diff_r(queue, j);
     DOUBLE ch = PREDICTOR_COEFFS[j] * h;
     for (int k = 0; k < dim; k++) {
       out[k] += ch * diff[k];
@@ -78,7 +78,7 @@ void predict(ABMData *abm_data) {
   }
 }
 
-void correct(ABMData *abm_data, DOUBLE *diffs) {
+void correct(ABMData *abm_data) {
 
   int dim = abm_data->input.dim;
   int abm_order = abm_data->input.abm_order;
@@ -86,7 +86,7 @@ void correct(ABMData *abm_data, DOUBLE *diffs) {
   Queue *queue = abm_data->queue;
   DOUBLE *out = peek_right(queue);
 
-  DOUBLE *last_diff = &diffs[abm_order * dim];
+  DOUBLE *last_diff = get_diff_w(queue, abm_order);
   DOUBLE ch = h * PREDICTOR_COEFFS[abm_order];
   for (int k = 0; k < dim; k++) {
     out[k] += ch * last_diff[k];
@@ -114,8 +114,7 @@ void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
         out[i] += out2[i];
       }
     }
-  }
-  else if (data->input.f2 != NULL) {
+  } else if (data->input.f2 != NULL) {
     data->input.f2(states, dotstates, t, out, data->input.context);
   }
 }
@@ -281,7 +280,8 @@ void run_abm(ABM *abm) {
     DOUBLE *sol_address = push(queue);
     memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(DOUBLE));
     memcpy(&sol_address[dim], &rk4_rhss[i * dim], dim * sizeof(DOUBLE));
-    update_diffs(queue, 0);
+    update_diffs(queue);
+    swap_diffs(queue);
     k++;
   }
   free(rk4_rhss);
@@ -315,17 +315,19 @@ void run_abm(ABM *abm) {
     get_delayed_dotstates(&abm_data, t, 0, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
-    DOUBLE *diffs = update_diffs(queue, 1);
+    update_diffs(queue);
     memcpy(backup, peek_right(queue), dim * sizeof(DOUBLE));
-    correct(&abm_data, diffs);
+    correct(&abm_data);
 
     get_delayed_states(&abm_data, t, states);
     get_delayed_dotstates(&abm_data, t, 1, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
-    diffs = update_diffs(queue, 0);
+    update_diffs(queue);
     memcpy(peek_right(queue), backup, dim * sizeof(DOUBLE));
-    correct(&abm_data, diffs);
+    correct(&abm_data);
+
+    swap_diffs(queue);
 
     while (run_callback && (t - h) * hsgn < *callback_t * hsgn
                         && *callback_t * hsgn <= t * hsgn) {
