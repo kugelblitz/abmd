@@ -185,7 +185,7 @@ DOUBLE* push(Queue *q) {
   if (is_full(q))
     return NULL;
   q->tail = (q->tail + q->block_size) % (q->block_size * q->capacity);
-  q->size = q->size + 1;
+  q->size += 1;
   return &(q->array[q->tail]);
 }
 
@@ -194,7 +194,7 @@ DOUBLE* pop(Queue *q) {
     return NULL;
   DOUBLE *address = &q->array[q->head];
   q->head = (q->head + q->block_size) % (q->block_size * q->capacity);
-  q->size = q->size - 1;
+  q->size -= 1;
   q->t0 += q->h;
   return address;
 }

@@ -92,8 +92,7 @@ void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
         out[i] += out2[i];
       }
     }
-  }
-  else if (data->input->f2 != NULL) {
+  } else if (data->input->f2 != NULL) {
     data->input->f2(states, dotstates, t, out, data->input->context);
   }
 }
