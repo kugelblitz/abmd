@@ -232,9 +232,7 @@ DOUBLE* update_diffs(Queue *q) {
   DOUBLE *new = q->temp;
   memcpy(new, &peek_right(q)[dim], dim_size);
 
-  int ndiffs = is_full(q) ? qsize : qsize + 1;
-
-  for (int i = 0; i < ndiffs - 1; i++) {
+  for (int i = 0; i < qsize - 1; i++) {
     DOUBLE *idiff_r = &q->diffs_r[i * dim];
     DOUBLE *idiff_w = &q->diffs_w[i * dim];
     memcpy(idiff_w, new, dim_size);
@@ -243,7 +241,7 @@ DOUBLE* update_diffs(Queue *q) {
     }
   }
 
-  memcpy(&q->diffs_w[(ndiffs - 1) * dim], new, dim_size);
+  memcpy(&q->diffs_w[(qsize - 1) * dim], new, dim_size);
   return q->diffs_w;
 }
 
