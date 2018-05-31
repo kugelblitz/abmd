@@ -33,7 +33,6 @@ Queue *create_queue(int capacity, int block_size) {
   queue->array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
   queue->diffs_r = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
   queue->diffs_w = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
-  queue->temp = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
   queue->lgr_ws = (double *) malloc(capacity * sizeof(double));
   queue->lgr_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
   queue->lgr_nom = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
@@ -44,7 +43,6 @@ void destroy_queue(Queue *queue) {
   free(queue->array);
   free(queue->diffs_r);
   free(queue->diffs_w);
-  free(queue->temp);
   free(queue->lgr_ws);
   free(queue->lgr_ws_nolast);
   free(queue->lgr_nom);
@@ -211,12 +209,12 @@ DOUBLE* peek_right(Queue* q) {
   return &q->array[q->tail];
 }
 
-DOUBLE* get_diff_r(Queue *q, int i) {
-  return &q->diffs_r[i * q->dim];
+DOUBLE* get_diffs_r(Queue *q) {
+  return q->diffs_r;
 }
 
-DOUBLE* get_diff_w(Queue *q, int i) {
-  return &q->diffs_w[i * q->dim];
+DOUBLE* get_diffs_w(Queue *q) {
+  return q->diffs_w;
 }
 
 void swap_diffs(Queue *q) {
@@ -226,22 +224,27 @@ void swap_diffs(Queue *q) {
 }
 
 DOUBLE* update_diffs(Queue *q) {
-  int qsize = q->size;
+  int size = q->size;
+  int capacity = q->capacity;
   int dim = q->dim;
-  int dim_size = dim * sizeof(DOUBLE);
-  DOUBLE *new = q->temp;
-  memcpy(new, &peek_right(q)[dim], dim_size);
 
-  for (int i = 0; i < qsize - 1; i++) {
-    DOUBLE *idiff_r = &q->diffs_r[i * dim];
-    DOUBLE *idiff_w = &q->diffs_w[i * dim];
-    memcpy(idiff_w, new, dim_size);
-    for (int j = 0; j < dim; j++) {
-      new[j] -= idiff_r[j];
+  DOUBLE *right = &peek_right(q)[dim];
+  DOUBLE *diffs_r = q->diffs_r;
+  DOUBLE *diffs_w = q->diffs_w;
+
+  for (int i = 0; i < dim; i++) {
+    DOUBLE new = *right++;
+
+    for (int j = 0; j < size - 1; j++) {
+      *diffs_w++ = new;
+      new -= *diffs_r++;
     }
+
+    *diffs_w = new;
+    diffs_r += capacity - size + 1;
+    diffs_w += capacity - size + 1;
   }
 
-  memcpy(&q->diffs_w[(qsize - 1) * dim], new, dim_size);
   return q->diffs_w;
 }
 

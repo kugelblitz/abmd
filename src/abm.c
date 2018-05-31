@@ -43,15 +43,14 @@ void predict(ABMData *abm_data) {
 
   memset(out, 0, sizeof(DOUBLE) * dim);
 
-  for (int j = 0; j < abm_order; j++) {
-    DOUBLE *diff = get_diff_r(queue, j);
-    DOUBLE ch = PREDICTOR_COEFFS[j] * h;
-    for (int k = 0; k < dim; k++) {
-      out[k] += ch * diff[k];
-    }
-  }
-
+  DOUBLE *diffs = get_diffs_r(queue);
   for (int i = 0; i < dim; i++) {
+    DOUBLE *c = PREDICTOR_COEFFS;
+    for (int j = 0; j < abm_order; j++) {
+      DOUBLE ch = *c++ * h;
+      out[i] += *diffs++ * ch;
+    }
+    diffs += 1;  // because the last diff is not used
     out[i] += prev[i];
   }
 }
@@ -64,10 +63,11 @@ void correct(ABMData *abm_data) {
   Queue *queue = abm_data->queue;
   DOUBLE *out = peek_right(queue);
 
-  DOUBLE *last_diff = get_diff_w(queue, abm_order);
+  int qsize = get_capacity(queue);
+  DOUBLE *diffs = get_diffs_w(queue);
   DOUBLE ch = h * PREDICTOR_COEFFS[abm_order];
   for (int k = 0; k < dim; k++) {
-    out[k] += ch * last_diff[k];
+    out[k] += ch * diffs[qsize * k + abm_order];
   }
 }
 
