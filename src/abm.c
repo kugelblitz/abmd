@@ -65,20 +65,19 @@ void predict(ABMData *abm_data) {
 
   memset(out, 0, sizeof(DOUBLE) * dim);
 
-  for (int j = 0; j < abm_order; j++) {
-    DOUBLE *diff = get_diff_r(queue, j);
-    DOUBLE ch = PREDICTOR_COEFFS[j] * h;
-    for (int k = 0; k < dim; k++) {
-      out[k] += ch * diff[k];
-    }
-  }
-
+  DOUBLE *diffs = get_diffs_r(queue);
   for (int i = 0; i < dim; i++) {
+    DOUBLE *c = PREDICTOR_COEFFS;
+    for (int j = 0; j < abm_order; j++) {
+      DOUBLE ch = *c++ * h;
+      out[i] += *diffs++ * ch;
+    }
+    diffs += 1;  // because the last diff is not used
     out[i] += prev[i];
   }
 }
 
-void correct(ABMData *abm_data) {
+void correct(ABMData *abm_data, DOUBLE *x_predicted) {
 
   int dim = abm_data->input.dim;
   int abm_order = abm_data->input.abm_order;
@@ -86,10 +85,13 @@ void correct(ABMData *abm_data) {
   Queue *queue = abm_data->queue;
   DOUBLE *out = peek_right(queue);
 
-  DOUBLE *last_diff = get_diff_w(queue, abm_order);
+  if (x_predicted == NULL) x_predicted = out;
+
+  int qsize = get_capacity(queue);
+  DOUBLE *diffs = get_diffs_w(queue);
   DOUBLE ch = h * PREDICTOR_COEFFS[abm_order];
   for (int k = 0; k < dim; k++) {
-    out[k] += ch * last_diff[k];
+    out[k] = x_predicted[k] + ch * diffs[qsize * k + abm_order];
   }
 }
 
@@ -317,15 +319,14 @@ void run_abm(ABM *abm) {
 
     update_diffs(queue);
     memcpy(backup, peek_right(queue), dim * sizeof(DOUBLE));
-    correct(&abm_data);
+    correct(&abm_data, NULL);
 
     get_delayed_states(&abm_data, t, states);
     get_delayed_dotstates(&abm_data, t, 1, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
     update_diffs(queue);
-    memcpy(peek_right(queue), backup, dim * sizeof(DOUBLE));
-    correct(&abm_data);
+    correct(&abm_data, backup);
 
     swap_diffs(queue);
 
