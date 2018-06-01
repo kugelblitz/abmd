@@ -224,7 +224,7 @@ void swap_diffs(Queue *q) {
   q->diffs_w = diffs_r;
 }
 
-DOUBLE* update_diffs(Queue *q) {
+void update_diffs(Queue *q) {
   int size = q->size;
   int capacity = q->capacity;
   int dim = q->dim;
@@ -245,8 +245,6 @@ DOUBLE* update_diffs(Queue *q) {
     diffs_r += capacity - size + 1;
     diffs_w += capacity - size + 1;
   }
-
-  return q->diffs_w;
 }
 
 
