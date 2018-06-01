@@ -11,7 +11,8 @@ struct _Queue {
   double t0, h;
   int head, tail, size, dim;
   int capacity, block_size;
-  DOUBLE* array;
+  DOUBLE* _array;
+  DOUBLE** array;
   DOUBLE* diffs_r;
   DOUBLE* diffs_w;
   DOUBLE* temp;
@@ -29,8 +30,14 @@ Queue *create_queue(int capacity, int block_size) {
   queue->block_size = block_size;
   queue->dim = dim;
   queue->head = queue->size = 0;
-  queue->tail = block_size * (capacity - 1);
-  queue->array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
+  queue->tail = capacity - 1;
+  queue->_array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
+  queue->array = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
+
+  for (int i = 0; i < capacity; i++) {
+    queue->array[i] = &queue->_array[i * block_size];
+  }
+
   queue->diffs_r = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
   queue->diffs_w = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
   queue->lgr_ws = (double *) malloc(capacity * sizeof(double));
@@ -40,6 +47,7 @@ Queue *create_queue(int capacity, int block_size) {
 }
 
 void destroy_queue(Queue *queue) {
+  free(queue->_array);
   free(queue->array);
   free(queue->diffs_r);
   free(queue->diffs_w);
@@ -170,28 +178,22 @@ void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
 }
 
 DOUBLE* get(Queue *q, int block_idx) {
-  int q_size = get_capacity(q);
-  if (block_idx < 0) {
-    return get(q, q_size + block_idx % q_size);
-  }
-  int array_idx = (q->head + q->block_size * block_idx) %
-                       (q->block_size * q_size);
-  return &q->array[array_idx];
+  return q->array[(q->head + block_idx) % q->capacity];
 }
 
 DOUBLE* push(Queue *q) {
   if (is_full(q))
     return NULL;
-  q->tail = (q->tail + q->block_size) % (q->block_size * q->capacity);
+  q->tail = (q->tail + 1) % q->capacity;
   q->size += 1;
-  return &(q->array[q->tail]);
+  return q->array[q->tail];
 }
 
 DOUBLE* pop(Queue *q) {
   if (is_empty(q))
     return NULL;
-  DOUBLE *address = &q->array[q->head];
-  q->head = (q->head + q->block_size) % (q->block_size * q->capacity);
+  DOUBLE *address = q->array[q->head];
+  q->head = (q->head + 1) % q->capacity;
   q->size -= 1;
   q->t0 += q->h;
   return address;
@@ -200,13 +202,13 @@ DOUBLE* pop(Queue *q) {
 DOUBLE* peek_left(Queue* q) {
   if (is_empty(q))
     return NULL;
-  return &q->array[q->head];
+  return q->array[q->head];
 }
 
 DOUBLE* peek_right(Queue* q) {
   if (is_empty(q))
     return NULL;
-  return &q->array[q->tail];
+  return q->array[q->tail];
 }
 
 DOUBLE* get_diffs_r(Queue *q) {
@@ -283,9 +285,6 @@ int test() {
   assert(get(queue, 0)[0] == 20);
   assert(get(queue, 1)[1] == 35);
   assert(get(queue, 2)[0] == 40);
-  assert(get(queue, -3)[0] == 30);
-  assert(get(queue, -4)[0] == 20);
-  assert(get(queue, -7)[1] == 35);
 
   printf("Queue tests passed");
   return 0;
