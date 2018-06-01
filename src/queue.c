@@ -15,7 +15,6 @@ struct _Queue {
   DOUBLE** array;
   DOUBLE* diffs_r;
   DOUBLE* diffs_w;
-  DOUBLE* temp;
   double *lgr_ws;
   double *lgr_ws_nolast;
   DOUBLE *lgr_nom;
