@@ -149,15 +149,16 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
   DOUBLE denom = 0;
   for (int i = 0; i < n; i++) {
     double tti = t - (q->t0 + i * q->h);
-    denom += ws[i] / tti;
+    double coef = ws[i] / tti;
+    denom += coef;
     DOUBLE *x = &get(q, i)[dim_start];
     if (idxs == NULL) {
       for (int j = 0; j < idxs_len; j++) {
-        nom[j] += ws[i] * x[j] / tti;
+        nom[j] += coef * x[j];
       }
     } else {
       for (int j = 0; j < idxs_len; j++) {
-        nom[j] += ws[i] * x[idxs[j]] / tti;
+        nom[j] += coef * x[idxs[j]];
       }
     }
   }
