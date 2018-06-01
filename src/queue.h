@@ -17,6 +17,7 @@ DOUBLE* peek_left(Queue* q);
 DOUBLE* peek_right(Queue* q);
 DOUBLE* get_diffs_r(Queue *q);
 DOUBLE* get_diffs_w(Queue *q);
+DOUBLE* get_last_diff(Queue *q);
 void swap_diffs(Queue *q);
 void update_diffs(Queue* q);
 void set_t0(Queue *q, double t0);

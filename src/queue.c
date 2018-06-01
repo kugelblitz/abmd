@@ -15,6 +15,7 @@ struct _Queue {
   DOUBLE** array;
   DOUBLE* diffs_r;
   DOUBLE* diffs_w;
+  DOUBLE* last_diff;
   double *lgr_ws;
   double *lgr_ws_nolast;
   DOUBLE *lgr_nom;
@@ -37,8 +38,9 @@ Queue *create_queue(int capacity, int block_size) {
     queue->array[i] = &queue->_array[i * block_size];
   }
 
-  queue->diffs_r = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
-  queue->diffs_w = (DOUBLE *) malloc(capacity * dim * sizeof(DOUBLE));
+  queue->diffs_r = (DOUBLE *) malloc((capacity - 1) * dim * sizeof(DOUBLE));
+  queue->diffs_w = (DOUBLE *) malloc((capacity - 1) * dim * sizeof(DOUBLE));
+  queue->last_diff = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
   queue->lgr_ws = (double *) malloc(capacity * sizeof(double));
   queue->lgr_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
   queue->lgr_nom = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
@@ -50,6 +52,7 @@ void destroy_queue(Queue *queue) {
   free(queue->array);
   free(queue->diffs_r);
   free(queue->diffs_w);
+  free(queue->last_diff);
   free(queue->lgr_ws);
   free(queue->lgr_ws_nolast);
   free(queue->lgr_nom);
@@ -218,6 +221,10 @@ DOUBLE* get_diffs_w(Queue *q) {
   return q->diffs_w;
 }
 
+DOUBLE* get_last_diff(Queue *q) {
+  return q->last_diff;
+}
+
 void swap_diffs(Queue *q) {
   DOUBLE *diffs_r = q->diffs_r;
   q->diffs_r = q->diffs_w;
@@ -226,24 +233,36 @@ void swap_diffs(Queue *q) {
 
 void update_diffs(Queue *q) {
   int size = q->size;
-  int capacity = q->capacity;
+  int diffs_len = q->capacity - 1;
   int dim = q->dim;
 
   DOUBLE *right = &peek_right(q)[dim];
   DOUBLE *diffs_r = q->diffs_r;
   DOUBLE *diffs_w = q->diffs_w;
 
+  if (!is_full(q)) {
+    for (int i = 0; i < dim; i++) {
+      DOUBLE new = *right++;
+      for (int j = 0; j < size - 1; j++) {
+        *diffs_w++ = new;
+        new -= *diffs_r++;
+      }
+      *diffs_w = new;
+      diffs_w += diffs_len - size + 1;
+      diffs_r += diffs_len - size + 1;
+    }
+    return;
+  }
+
+  DOUBLE *last_diff = q->last_diff;
+
   for (int i = 0; i < dim; i++) {
     DOUBLE new = *right++;
-
     for (int j = 0; j < size - 1; j++) {
       *diffs_w++ = new;
       new -= *diffs_r++;
     }
-
-    *diffs_w = new;
-    diffs_r += capacity - size + 1;
-    diffs_w += capacity - size + 1;
+    *last_diff++ = new;
   }
 }
 
