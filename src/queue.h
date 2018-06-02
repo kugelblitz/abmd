@@ -10,6 +10,8 @@ void destroy_queue(Queue *queue);
 int is_full(Queue *q);
 int is_empty(Queue *q);
 int get_capacity(Queue *q);
+void backup_last_x(Queue *q);
+void restore_last_x(Queue *q);
 DOUBLE* push(Queue *q);
 DOUBLE* pop(Queue *q);
 DOUBLE* peek_left(Queue* q);

@@ -13,6 +13,7 @@ struct _Queue {
   int capacity, block_size;
   DOUBLE* _array;
   DOUBLE **xarray, **dxarray;
+  DOUBLE *x_backup;
   DOUBLE* diffs_r;
   DOUBLE* diffs_w;
   DOUBLE* last_diff;
@@ -34,6 +35,7 @@ Queue *create_queue(int capacity, int block_size) {
   queue->_array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
   queue->xarray = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
   queue->dxarray = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
+  queue->x_backup = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
 
   for (int i = 0; i < capacity; i++) {
     queue->xarray[i] = &queue->_array[i * block_size];
@@ -53,6 +55,7 @@ void destroy_queue(Queue *queue) {
   free(queue->_array);
   free(queue->xarray);
   free(queue->dxarray);
+  free(queue->x_backup);
   free(queue->diffs_r);
   free(queue->diffs_w);
   free(queue->last_diff);
@@ -131,6 +134,15 @@ DOUBLE* get_x(Queue *q, int block_idx) {
 
 DOUBLE* get_dx(Queue *q, int block_idx) {
   return q->dxarray[(q->head + block_idx) % q->capacity];
+}
+
+void backup_last_x(Queue *q) {
+  q->xarray[q->tail] = q->x_backup;
+}
+
+void restore_last_x(Queue *q) {
+  int i = (q->tail * q->block_size) % (q->capacity * q->block_size);
+  q->xarray[q->tail] = &q->_array[i];
 }
 
 void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,

@@ -300,8 +300,6 @@ void run_abm(ABM *abm) {
   free(rk4_sol);
   free(init);
 
-  DOUBLE *backup = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
-
   // Main ABM loop
   int start_index = rk4_i1 + 1;
   for (int i = start_index; i < n; i++) {
@@ -314,15 +312,17 @@ void run_abm(ABM *abm) {
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
     update_diffs(queue);
-    memcpy(backup, peek_right(queue), dim * sizeof(DOUBLE));
-    correct(&abm_data, NULL);
+    DOUBLE *predicted = peek_right_x(queue);
+    backup_last_x(queue);
+    correct(&abm_data, predicted);
 
     get_delayed_states(&abm_data, t, states);
     get_delayed_dotstates(&abm_data, t, 1, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
 
     update_diffs(queue);
-    correct(&abm_data, backup);
+    restore_last_x(queue);
+    correct(&abm_data, NULL);
 
     swap_diffs(queue);
 
@@ -342,7 +342,6 @@ void run_abm(ABM *abm) {
 
   destroy_abm_data(abm_data);
   free(dotstates);
-  free(backup);
   free(callback_state);
   free(callback_state_l);
 }
