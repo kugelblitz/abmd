@@ -7,6 +7,8 @@
 #include "abm.h"
 #include "plot.h"
 
+#define DIM 4000
+
 typedef struct {
   double *callback_t;
   int i;
@@ -20,7 +22,8 @@ int callback_there(double *t, double *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(double));
   abm_test->i++;
-  t[0] += 1 / 32.0;
+//  t[0] += 1 / 32.0;
+  t[0] += 1 / 16.0;
   return 1;
 }
 
@@ -29,21 +32,32 @@ int callback_back(double *t, double *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state, dim * sizeof(double));
   abm_test->i++;
-  t[0] -= 1 / 32.0;
+//  t[0] -= 1 / 32.0;
+  t[0] -= 1 / 16.0;
   return 1;
 }
 
 void calc_difference(RHS1 f) {
   int order = 11;
-  double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
+//  double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
-  double t1 = 5;
+  double t1 = 365;
   double h = 1 / 16.0;
-  double delay = 0.096;
-  int dim = 4;
+//  double delay = 0.096;
+  double delay = 0;
+  int dim = DIM;
+  double *init = malloc(dim * sizeof(double));
+  for (int i = 0; i < dim; i += 4) {
+    init[i] = -3844e5;
+    init[i + 1] = 0;
+    init[i + 2] = 0;
+    init[i + 3] = 1023 * 3600 * 24;
+  }
+
 
   int n = (int)(1 + (t1 - t0) / h);
-  int sol_size = 2 * n - 1;
+//  int sol_size = 2 * n - 1;
+  int sol_size = n;
   double *sol = (double *) malloc(sizeof(double) * sol_size * dim);
   double *sol_back = (double *) malloc(sizeof(double) * sol_size * dim);
   double callback_t = 0;
@@ -111,24 +125,26 @@ void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
   const DOUBLE mu1 = G * m1;
   const DOUBLE mu2 = G * m2;
   const DOUBLE q = mu1 + mu2;
-  DOUBLE x = states[0];
-  DOUBLE vx = states[1];
-  DOUBLE y = states[2];
-  DOUBLE vy = states[3];
-  DOUBLE r = sqrt(x * x + y * y);
-  out[0] = vx;
-  out[1] = -q * x / (r * r * r);
-  out[2] = vy;
-  out[3] = -q * y / (r * r * r);
-  DOUBLE x_delayed = states[4];
-  DOUBLE y_delayed = states[5];
-  const int ae = 6371000;
-  const double k2 = 0.335;
-  DOUBLE c = -(3 * k2 * mu2 / (r * r * r)) * (1 + mu2 / mu1) * (pow(ae / r, 5));
-  out[1] += c * x_delayed;
-  out[3] += c * y_delayed;
+  DOUBLE x_delayed = states[DIM];
+  DOUBLE y_delayed = states[DIM + 1];
+  for (int i = 0; i < DIM; i += 4) {
+    DOUBLE x = states[i];
+    DOUBLE vx = states[i + 1];
+    DOUBLE y = states[i + 2];
+    DOUBLE vy = states[i + 3];
+    DOUBLE r = sqrt(x * x + y * y);
+    out[i] = vx;
+    out[i + 1] = -q * x / (r * r * r);
+    out[i + 2] = vy;
+    out[i + 3] = -q * y / (r * r * r);
+    const int ae = 6371000;
+    const double k2 = 0.335;
+    DOUBLE c =
+            -(3 * k2 * mu2 / (r * r * r)) * (1 + mu2 / mu1) * (pow(ae / r, 5));
+    out[i + 1] += c * x_delayed;
+    out[i + 3] += c * y_delayed;
+  }
 }
-
 
 
 int main() {
@@ -137,6 +153,7 @@ int main() {
   calc_difference(orbit);
   t = clock() - t;
   double secs = ((double) t) / CLOCKS_PER_SEC;
-  printf("Finished in %f seconds\n", secs);
+//  printf("Finished in %f seconds\n", secs);
+  printf("%d, %f\n", DIM, secs);
   return 0;
 }
