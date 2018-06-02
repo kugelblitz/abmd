@@ -12,7 +12,7 @@ struct _Queue {
   int head, tail, size, dim;
   int capacity, block_size;
   DOUBLE* _array;
-  DOUBLE** array;
+  DOUBLE **xarray, **dxarray;
   DOUBLE* diffs_r;
   DOUBLE* diffs_w;
   DOUBLE* last_diff;
@@ -32,10 +32,12 @@ Queue *create_queue(int capacity, int block_size) {
   queue->head = queue->size = 0;
   queue->tail = capacity - 1;
   queue->_array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
-  queue->array = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
+  queue->xarray = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
+  queue->dxarray = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
 
   for (int i = 0; i < capacity; i++) {
-    queue->array[i] = &queue->_array[i * block_size];
+    queue->xarray[i] = &queue->_array[i * block_size];
+    queue->dxarray[i] = &queue->_array[i * block_size + dim];
   }
 
   queue->diffs_r = (DOUBLE *) malloc((capacity - 1) * dim * sizeof(DOUBLE));
@@ -49,7 +51,8 @@ Queue *create_queue(int capacity, int block_size) {
 
 void destroy_queue(Queue *queue) {
   free(queue->_array);
-  free(queue->array);
+  free(queue->xarray);
+  free(queue->dxarray);
   free(queue->diffs_r);
   free(queue->diffs_w);
   free(queue->last_diff);
@@ -122,8 +125,16 @@ int _get_t_index(Queue *q, double t, int last_known) {
   return -1;
 }
 
+DOUBLE* get_x(Queue *q, int block_idx) {
+  return q->xarray[(q->head + block_idx) % q->capacity];
+}
+
+DOUBLE* get_dx(Queue *q, int block_idx) {
+  return q->dxarray[(q->head + block_idx) % q->capacity];
+}
+
 void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
-               int dim_start, DOUBLE *out) {
+               DOUBLE *(*get)(Queue *, int), DOUBLE *out) {
 
   int t_idx = _get_t_index(q, t, last_known);
   if (t_idx != -1) {
@@ -151,7 +162,7 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
     double tti = t - (q->t0 + i * q->h);
     double coef = ws[i] / tti;
     denom += coef;
-    DOUBLE *x = &get(q, i)[dim_start];
+    DOUBLE *x = get(q, i);
     if (idxs == NULL) {
       for (int j = 0; j < idxs_len; j++) {
         nom[j] += coef * x[j];
@@ -168,20 +179,16 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
 }
 
 void evaluate_x_all(Queue *q, double t, DOUBLE *out) {
-  _evaluate(q, t, NULL, q->dim, 1, 0, out);
+  _evaluate(q, t, NULL, q->dim, 1, get_x, out);
 }
 
 void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out) {
-  _evaluate(q, t, idxs, idxs_len, 1, 0, out);
+  _evaluate(q, t, idxs, idxs_len, 1, get_x, out);
 }
 
 void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
                    int last_known, DOUBLE *out) {
-  _evaluate(q, t, idxs, idxs_len, last_known, q->dim, out);
-}
-
-DOUBLE* get(Queue *q, int block_idx) {
-  return q->array[(q->head + block_idx) % q->capacity];
+  _evaluate(q, t, idxs, idxs_len, last_known, get_dx, out);
 }
 
 DOUBLE* push(Queue *q) {
@@ -189,13 +196,13 @@ DOUBLE* push(Queue *q) {
     return NULL;
   q->tail = (q->tail + 1) % q->capacity;
   q->size += 1;
-  return q->array[q->tail];
+  return q->xarray[q->tail];
 }
 
 DOUBLE* pop(Queue *q) {
   if (is_empty(q))
     return NULL;
-  DOUBLE *address = q->array[q->head];
+  DOUBLE *address = q->xarray[q->head];
   q->head = (q->head + 1) % q->capacity;
   q->size -= 1;
   q->t0 += q->h;
@@ -205,13 +212,19 @@ DOUBLE* pop(Queue *q) {
 DOUBLE* peek_left(Queue* q) {
   if (is_empty(q))
     return NULL;
-  return q->array[q->head];
+  return q->xarray[q->head];
 }
 
-DOUBLE* peek_right(Queue* q) {
+DOUBLE* peek_right_x(Queue* q) {
   if (is_empty(q))
     return NULL;
-  return q->array[q->tail];
+  return q->xarray[q->tail];
+}
+
+DOUBLE* peek_right_dx(Queue* q) {
+  if (is_empty(q))
+    return NULL;
+  return q->dxarray[q->tail];
 }
 
 DOUBLE* get_diffs_r(Queue *q) {
@@ -237,7 +250,7 @@ void update_diffs(Queue *q) {
   int diffs_len = q->capacity - 1;
   int dim = q->dim;
 
-  DOUBLE *right = &peek_right(q)[dim];
+  DOUBLE *right = peek_right_dx(q);
   DOUBLE *diffs_r = q->diffs_r;
   DOUBLE *diffs_w = q->diffs_w;
 
@@ -275,7 +288,7 @@ int test() {
   address[0] = 10;
   address[1] = 15;
 
-  assert(peek_left(queue) == peek_right(queue));
+  assert(peek_left(queue) == peek_right_x(queue));
   assert(peek_left(queue)[0] == 10);
   assert(peek_left(queue)[1] == 15);
 
@@ -283,10 +296,10 @@ int test() {
   address[0] = 20;
   address[1] = 25;
 
-  assert(peek_left(queue) != peek_right(queue));
+  assert(peek_left(queue) != peek_right_x(queue));
   assert(peek_left(queue)[0] == 10);
-  assert(peek_right(queue)[0] == 20);
-  assert(peek_right(queue)[1] == 25);
+  assert(peek_right_x(queue)[0] == 20);
+  assert(peek_right_x(queue)[1] == 25);
 
   address = push(queue);
   address[0] = 30;
@@ -297,11 +310,11 @@ int test() {
 
   assert(pop(queue)[0] == 10);
   assert(peek_left(queue)[1] == 25);
-  assert(peek_right(queue)[0] == 40);
+  assert(peek_right_x(queue)[0] == 40);
 
-  assert(get(queue, 0)[0] == 20);
-  assert(get(queue, 1)[1] == 35);
-  assert(get(queue, 2)[0] == 40);
+  assert(get_x(queue, 0)[0] == 20);
+  assert(get_x(queue, 1)[1] == 35);
+  assert(get_x(queue, 2)[0] == 40);
 
   printf("Queue tests passed");
   return 0;

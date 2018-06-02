@@ -58,7 +58,7 @@ void predict(ABMData *abm_data) {
   Queue *queue = abm_data->queue;
 
   pop(queue);
-  DOUBLE *prev = peek_right(queue);
+  DOUBLE *prev = peek_right_x(queue);
   DOUBLE *out = push(queue);
 
   memset(out, 0, sizeof(DOUBLE) * dim);
@@ -80,7 +80,7 @@ void correct(ABMData *abm_data, DOUBLE *x_predicted) {
   int abm_order = abm_data->input.abm_order;
   double h = abm_data->input.h;
   Queue *queue = abm_data->queue;
-  DOUBLE *out = peek_right(queue);
+  DOUBLE *out = peek_right_x(queue);
 
   if (x_predicted == NULL) x_predicted = out;
 
@@ -308,7 +308,7 @@ void run_abm(ABM *abm) {
     double t = t0 + i * h;
 
     predict(&abm_data);
-    DOUBLE *rhs_out = &peek_right(queue)[dim];
+    DOUBLE *rhs_out = peek_right_dx(queue);
     get_delayed_states(&abm_data, t, states);
     get_delayed_dotstates(&abm_data, t, 0, dotstates);
     rhs(states, dotstates, t, rhs_out, &abm_data);
@@ -337,7 +337,7 @@ void run_abm(ABM *abm) {
   }
   
   for (int i = 0; i < dim; i++) {
-    abm->final_state[i] = (double) peek_right(queue)[i];
+    abm->final_state[i] = (double) peek_right_x(queue)[i];
   }
 
   destroy_abm_data(abm_data);
