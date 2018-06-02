@@ -6,7 +6,6 @@
 #include "abm.h"
 #include "abm_struct.h"
 #include "rk.h"
-//#include "coeffs.h"
 #include "queue.h"
 
 static DOUBLE PREDICTOR_COEFFS[19] = {
