@@ -6,8 +6,6 @@
                    projectFiles="true">
       <itemPath>abm.h</itemPath>
       <itemPath>src/abm_struct.h</itemPath>
-      <itemPath>src/coeffs.h</itemPath>
-      <itemPath>src/poly.h</itemPath>
       <itemPath>src/queue.h</itemPath>
       <itemPath>src/rk.h</itemPath>
     </logicalFolder>
@@ -20,8 +18,6 @@
                    projectFiles="true">
       <itemPath>src/abm.c</itemPath>
       <itemPath>src/api.c</itemPath>
-      <itemPath>src/coeffs.c</itemPath>
-      <itemPath>src/poly.c</itemPath>
       <itemPath>src/queue.c</itemPath>
       <itemPath>src/rk.c</itemPath>
     </logicalFolder>
@@ -64,14 +60,6 @@
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="src/poly.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/poly.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -117,14 +105,6 @@
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="src/poly.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/poly.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -173,14 +153,6 @@
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="src/poly.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/poly.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -232,14 +204,6 @@
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/coeffs.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="src/poly.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/poly.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -297,14 +261,6 @@
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="3">
       </item>
-      <item path="src/coeffs.c" ex="false" tool="0" flavor2="3">
-      </item>
-      <item path="src/coeffs.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="src/poly.c" ex="false" tool="0" flavor2="3">
-      </item>
-      <item path="src/poly.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="src/queue.c" ex="false" tool="0" flavor2="3">
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
@@ -358,14 +314,6 @@
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="3">
-      </item>
-      <item path="src/coeffs.c" ex="false" tool="0" flavor2="3">
-      </item>
-      <item path="src/coeffs.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="src/poly.c" ex="false" tool="0" flavor2="3">
-      </item>
-      <item path="src/poly.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/queue.c" ex="false" tool="0" flavor2="3">
       </item>
