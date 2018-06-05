@@ -22,8 +22,8 @@ struct _Queue {
   DOUBLE *lgr_nom;
 };
 
-Queue *create_queue(int capacity, int block_size) {
-  int dim = block_size / 2;
+Queue *create_queue(int capacity, int dim) {
+  int block_size = 2 * dim;
   Queue* queue = (Queue *) malloc(sizeof(Queue));
   queue->t0 = 0;
   queue->h = 1;

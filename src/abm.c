@@ -238,7 +238,7 @@ void run_abm(ABM *abm) {
   }
 
   int queue_size = abm_order + 1;
-  Queue *queue = create_queue(queue_size, 2 * dim);
+  Queue *queue = create_queue(queue_size, dim);
   set_t0(queue, t0);
   set_step(queue, h);
 
