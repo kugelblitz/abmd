@@ -17,8 +17,11 @@ struct _Queue {
   DOUBLE* diffs_r;
   DOUBLE* diffs_w;
   DOUBLE* last_diff;
-  double *lgr_ws;
-  double *lgr_ws_nolast;
+  int delays_poly_degree;
+  int pointsave_poly_degree;
+  double *lgr_delay_ws;
+  double *lgr_delay_ws_nolast;
+  double *lgr_pointsave_ws;
   DOUBLE *lgr_nom;
 };
 
@@ -45,8 +48,11 @@ Queue *create_queue(int capacity, int dim) {
   queue->diffs_r = (DOUBLE *) malloc((capacity - 1) * dim * sizeof(DOUBLE));
   queue->diffs_w = (DOUBLE *) malloc((capacity - 1) * dim * sizeof(DOUBLE));
   queue->last_diff = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
-  queue->lgr_ws = (double *) malloc(capacity * sizeof(double));
-  queue->lgr_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
+  queue->delays_poly_degree = capacity - 1;
+  queue->pointsave_poly_degree = capacity - 1;
+  queue->lgr_delay_ws = (double *) malloc(capacity * sizeof(double));
+  queue->lgr_delay_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
+  queue->lgr_pointsave_ws = (double *) malloc(capacity * sizeof(double));
   queue->lgr_nom = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
   return queue;
 }
@@ -59,8 +65,9 @@ void destroy_queue(Queue *queue) {
   free(queue->diffs_r);
   free(queue->diffs_w);
   free(queue->last_diff);
-  free(queue->lgr_ws);
-  free(queue->lgr_ws_nolast);
+  free(queue->lgr_delay_ws);
+  free(queue->lgr_delay_ws_nolast);
+  free(queue->lgr_pointsave_ws);
   free(queue->lgr_nom);
   free(queue);
 }
@@ -81,6 +88,14 @@ void set_t0(Queue *q, double t0) {
   q->t0 = t0;
 }
 
+void qset_delays_poly_degree(Queue *q, int deg) {
+  q->delays_poly_degree = deg;
+}
+
+void qset_pointsave_poly_degree(Queue *q, int deg) {
+  q->pointsave_poly_degree = deg;
+}
+
 double _compute_wj(Queue *q, int j, int len) {
   /*
    * Computes j-th barycentric Lagrange weight (eq. 3.2)
@@ -95,12 +110,17 @@ double _compute_wj(Queue *q, int j, int len) {
 }
 
 void _initialize_weights(Queue *q) {
-  int n = get_capacity(q);
+  int n = q->delays_poly_degree + 1;
   for (int i = 0; i < n - 1; i++) {
-    q->lgr_ws[i] = _compute_wj(q, i, n);
-    q->lgr_ws_nolast[i] = _compute_wj(q, i, n - 1);
+    q->lgr_delay_ws[i] = _compute_wj(q, i, n);
+    q->lgr_delay_ws_nolast[i] = _compute_wj(q, i, n - 1);
   }
-  q->lgr_ws[n - 1] = _compute_wj(q, n - 1, n);
+  q->lgr_delay_ws[n - 1] = _compute_wj(q, n - 1, n);
+
+  int m = q->pointsave_poly_degree + 1;
+  for (int i = 0; i < m; i++) {
+    q->lgr_pointsave_ws[i] = _compute_wj(q, i, m);
+  }
 }
 
 void set_step(Queue *q, double h) {
@@ -108,7 +128,7 @@ void set_step(Queue *q, double h) {
   _initialize_weights(q);
 }
 
-int _get_t_index(Queue *q, double t, int last_known) {
+double _get_t_index(Queue *q, double t, int last_known) {
   double t0 = q->t0;
   double h = q->h;
   int n = get_capacity(q);
@@ -122,9 +142,10 @@ int _get_t_index(Queue *q, double t, int last_known) {
   t *= hsgn;
   h *= hsgn;
 
-  if (t0 <= t && t <= t1 && fmod((t - t0), h) < 1e-13) {
-    return (int) round((t - t0) / h);
+  if (t0 <= t && t <= t1) {
+    return (t - t0) / h;
   }
+
   return -1;
 }
 
@@ -145,12 +166,13 @@ void restore_last_x(Queue *q) {
   q->xarray[q->tail] = &q->_array[i];
 }
 
-void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
-               DOUBLE *(*get)(Queue *, int), DOUBLE *out) {
+void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
+               double *ws, int last_known, DOUBLE *(*get)(Queue *, int),
+               DOUBLE *out) {
 
-  int t_idx = _get_t_index(q, t, last_known);
-  if (t_idx != -1) {
-    DOUBLE *x = get(q, t_idx);
+  double t_idx = _get_t_index(q, t, last_known);
+  if (t_idx != -1 && fmod(t_idx, 1) < 1e-13) {
+    DOUBLE *x = get(q, (int) round(t_idx));
     if (idxs == NULL)
       memcpy(out, x, idxs_len * sizeof(DOUBLE));
     else
@@ -160,21 +182,23 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
     return;
   }
 
-  int n = get_capacity(q);
-  double *ws = q->lgr_ws;
+  int left = get_capacity(q) - n_points;
   if (!last_known) {
-    ws = q->lgr_ws_nolast;
-    n -= 1;
+    left -= 1;
   }
+  if (t_idx != -1 && t_idx < left) {
+    left = (int) t_idx;
+  }
+
 
   DOUBLE *nom = q->lgr_nom;
   memset(nom, 0, q->dim * sizeof(DOUBLE));
   DOUBLE denom = 0;
-  for (int i = 0; i < n; i++) {
-    double tti = t - (q->t0 + i * q->h);
+  for (int i = 0; i < n_points; i++) {
+    double tti = t - (q->t0 + (i + left) * q->h);
     double coef = ws[i] / tti;
     denom += coef;
-    DOUBLE *x = get(q, i);
+    DOUBLE *x = get(q, i + left);
     if (idxs == NULL) {
       for (int j = 0; j < idxs_len; j++) {
         nom[j] += coef * x[j];
@@ -191,16 +215,24 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int last_known,
 }
 
 void evaluate_x_all(Queue *q, double t, DOUBLE *out) {
-  _evaluate(q, t, NULL, q->dim, 1, get_x, out);
+  _evaluate(q, t, NULL, q->dim, q->pointsave_poly_degree + 1,
+            q->lgr_pointsave_ws, 1, get_x, out);
 }
 
 void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out) {
-  _evaluate(q, t, idxs, idxs_len, 1, get_x, out);
+  _evaluate(q, t, idxs, idxs_len, q->delays_poly_degree + 1,
+            q->lgr_delay_ws, 1, get_x, out);
 }
 
 void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
                    int last_known, DOUBLE *out) {
-  _evaluate(q, t, idxs, idxs_len, last_known, get_dx, out);
+  double *ws = q->lgr_delay_ws;
+  int n_points = q->delays_poly_degree + 1;
+  if (!last_known && q->pointsave_poly_degree == get_capacity(q) - 1) {
+    ws = q->lgr_delay_ws_nolast;
+    n_points -= 1;
+  }
+  _evaluate(q, t, idxs, idxs_len, n_points, ws, last_known, get_dx, out);
 }
 
 DOUBLE* push(Queue *q) {

@@ -24,6 +24,8 @@ void swap_diffs(Queue *q);
 void update_diffs(Queue* q);
 void set_t0(Queue *q, double t0);
 void set_step(Queue *q, double h);
+void qset_delays_poly_degree(Queue *q, int deg);
+void qset_pointsave_poly_degree(Queue *q, int deg);
 void evaluate_x_all(Queue *q, double t, DOUBLE *out);
 void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out);
 void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,

@@ -14,8 +14,8 @@ struct _ABM {
   double *delays;
   int ndelays;
   int abm_order;
-  int interpolation_order;
-  int extrapolation_order;
+  int delays_poly_degree;
+  int pointsave_poly_degree;
   double *final_state;
   void *context;
   void (*init_call)(DOUBLE[], void*);

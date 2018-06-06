@@ -22,8 +22,8 @@ ABM *create_abm(RHS1 f, int dim, double t0, double t1, double h, double *init) {
           .delays=delays,
           .ndelays=1,
           .abm_order=ABM_ORDER,
-          .interpolation_order=4,
-          .extrapolation_order=1,
+          .delays_poly_degree=ABM_ORDER,
+          .pointsave_poly_degree=ABM_ORDER,
           .final_state=final_state,
           .context=NULL,
           .init_call=NULL,
@@ -58,12 +58,12 @@ void set_delays(ABM *abm, double *delays, int ndelays) {
   }
 }
 
-void set_interpolation_order(ABM *abm, int order) {
-  abm->interpolation_order = order;
+void set_delays_poly_degree(ABM *abm, int deg) {
+  abm->delays_poly_degree = deg;
 }
 
-void set_extrapolation_order(ABM *abm, int order) {
-  abm->extrapolation_order = order;
+void set_pointsave_poly_degree(ABM *abm, int deg) {
+  abm->pointsave_poly_degree = deg;
 }
 
 void set_f2(ABM *abm, RHS2 f2) {

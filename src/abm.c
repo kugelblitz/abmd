@@ -239,6 +239,8 @@ void run_abm(ABM *abm) {
 
   int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, dim);
+  qset_delays_poly_degree(queue, abm->delays_poly_degree);
+  qset_pointsave_poly_degree(queue, abm->pointsave_poly_degree);
   set_t0(queue, t0);
   set_step(queue, h);
 
