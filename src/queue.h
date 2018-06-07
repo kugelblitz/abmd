@@ -28,7 +28,7 @@ void qset_delays_poly_degree(Queue *q, int deg);
 void qset_pointsave_poly_degree(Queue *q, int deg);
 void evaluate_x_all(Queue *q, double t, DOUBLE *out);
 void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out);
-void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
-                   int last_known, DOUBLE *out);
+void evaluate_dx(Queue *q, double t, int *idxs, int idxs_len,
+                 int last_known, DOUBLE *out);
 
 #endif //DDE_QUEUE_H

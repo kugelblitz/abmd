@@ -7,7 +7,6 @@ typedef long double DOUBLE;
 #define fmod fmodl
 #define sqrt sqrtl
 #define pow powl
-#define ceil ceill
 
 #else
 typedef double DOUBLE;

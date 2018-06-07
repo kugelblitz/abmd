@@ -186,7 +186,7 @@ void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
 
     if (dx_out == NULL) continue;
 
-    evaluate_xdot(q, t, idxs, idxs_len, last_dx_known, &dx_out[i * idxs_len]);
+    evaluate_dx(q, t, idxs, idxs_len, last_dx_known, &dx_out[i * idxs_len]);
   }
 }
 

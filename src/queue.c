@@ -173,12 +173,13 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
   double t_idx = _get_t_index(q, t, last_known);
   if (t_idx != -1 && fmod(t_idx, 1) < 1e-13) {
     DOUBLE *x = get(q, (int) round(t_idx));
-    if (idxs == NULL)
+    if (idxs == NULL) {
       memcpy(out, x, idxs_len * sizeof(DOUBLE));
-    else
+    } else {
       for (int j = 0; j < idxs_len; j++) {
         out[j] = x[idxs[j]];
       }
+    }
     return;
   }
 
@@ -189,7 +190,6 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
   if (t_idx != -1 && t_idx < left) {
     left = (int) t_idx;
   }
-
 
   DOUBLE *nom = q->lgr_nom;
   memset(nom, 0, q->dim * sizeof(DOUBLE));
@@ -224,8 +224,8 @@ void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out) {
             q->lgr_delay_ws, 1, get_x, out);
 }
 
-void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
-                   int last_known, DOUBLE *out) {
+void evaluate_dx(Queue *q, double t, int *idxs, int idxs_len,
+                 int last_known, DOUBLE *out) {
   int deg = q->delays_poly_degree;
   double *ws = q->lgr_delay_ws;
   int n_points = deg + 1;
