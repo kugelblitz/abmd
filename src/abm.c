@@ -112,21 +112,22 @@ void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
   DOUBLE *temp = data->temp;
 
   memset(out, 0, sizeof(DOUBLE) * dim);
-  
-  if (data->input.f1 != NULL) {
-    data->input.f1(x, t, out, data->input.context);
-    
-    if (data->input.f2 != NULL) {
-      DOUBLE *out2 = &temp[0];
-      
-      memset(out2, 0, sizeof(DOUBLE) * dim);
-      data->input.f2(x, xs_delayed, dxs_delayed, t, out2, data->input.context);
-      for (int i = 0; i < dim; i++) {
-        out[i] += out2[i];
-      }
-    }
-  } else if (data->input.f2 != NULL) {
+
+  if (data->input.f1 == NULL) {
     data->input.f2(x, xs_delayed, dxs_delayed, t, out, data->input.context);
+    return;
+  }
+  
+  data->input.f1(x, t, out, data->input.context);
+
+  if (data->input.f2 == NULL) return;
+
+  DOUBLE *out2 = &temp[0];
+  memset(out2, 0, sizeof(DOUBLE) * dim);
+  data->input.f2(x, xs_delayed, dxs_delayed, t, out2, data->input.context);
+
+  for (int i = 0; i < dim; i++) {
+    out[i] += out2[i];
   }
 }
 
@@ -206,6 +207,11 @@ int run_abm(ABM *abm) {
       !(1 <= pointsave_degree && pointsave_degree <= abm_order)) {
     abm->error = "Interpolation degrees must be not less than 1 and"
                  "not greater than ABM order";
+    return 1;
+  }
+
+  if (abm->f1 == NULL && abm->f2 == NULL) {
+    abm->error = "Both RHSs are NULL";
     return 1;
   }
 
