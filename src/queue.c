@@ -175,10 +175,10 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
     DOUBLE *x = get(q, (int) round(t_idx));
     if (idxs == NULL) {
       memcpy(out, x, idxs_len * sizeof(DOUBLE));
-    } else {
-      for (int j = 0; j < idxs_len; j++) {
-        out[j] = x[idxs[j]];
-      }
+      return;
+    }
+    for (int j = 0; j < idxs_len; j++) {
+      out[j] = x[idxs[j]];
     }
     return;
   }
