@@ -191,10 +191,25 @@ void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
 }
 
 
-void run_abm(ABM *abm) {
+int run_abm(ABM *abm) {
+
+  int abm_order = abm->abm_order;
+
+  if (!(1 <= abm_order && abm_order <= 19)) {
+    abm->error = "ABM order must be not less than 1 and not greater than 19";
+    return 1;
+  }
+
+  int delays_degree = abm->delays_poly_degree;
+  int pointsave_degree = abm->pointsave_poly_degree;
+  if (!(1 <= delays_degree && delays_degree <= abm_order) ||
+      !(1 <= pointsave_degree && pointsave_degree <= abm_order)) {
+    abm->error = "Interpolation degrees must be not less than 1 and"
+                 "not greater than ABM order";
+    return 1;
+  }
 
   int dim = abm->dim;
-  int abm_order = abm->abm_order;
   double t0 = abm->t0;
   double t1 = abm->t1;
   int ndelays = abm->ndelays;
@@ -235,8 +250,8 @@ void run_abm(ABM *abm) {
 
   int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, dim);
-  qset_delays_poly_degree(queue, abm->delays_poly_degree);
-  qset_pointsave_poly_degree(queue, abm->pointsave_poly_degree);
+  qset_delays_poly_degree(queue, delays_degree);
+  qset_pointsave_poly_degree(queue, pointsave_degree);
   set_t0(queue, t0);
   set_step(queue, h);
 
@@ -339,4 +354,5 @@ void run_abm(ABM *abm) {
   destroy_abm_data(abm_data);
   free(callback_state);
   free(callback_state_l);
+  return 0;
 }

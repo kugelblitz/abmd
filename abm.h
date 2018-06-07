@@ -19,7 +19,7 @@ typedef void (*RHS)(DOUBLE x[], double t, DOUBLE *out, void *context);
 typedef void (*RHSD)(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
                      double t, DOUBLE *out, void *context);
 
-void run_abm(ABM *);
+int run_abm(ABM *);
 ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init);
 void destroy_abm(ABM *abm);
 void set_abm_order(ABM *abm, int order);
@@ -33,5 +33,6 @@ void set_callback(ABM *abm, int (*callback)(double *, double[], void*),
                   double *callback_t);
 double *get_final_state(ABM *abm);
 void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len);
+char *get_last_error(ABM *abm);
 
 #endif //DDE_ABM_H

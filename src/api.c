@@ -9,6 +9,7 @@
 ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init) {
   ABM *abm = (ABM *) malloc(sizeof(ABM));
   double *final_state = (double *) malloc(sizeof(double) * dim);
+  char *error = (char *) malloc(256 * sizeof(char));
   *abm = (ABM) {
           .f1=f,
           .f2=NULL,
@@ -28,7 +29,8 @@ ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init) {
           .callback_t=NULL,
           .callback=NULL,
           .delayed_idxs=NULL,
-          .delayed_idxs_len = dim
+          .delayed_idxs_len=dim,
+          .error=error
   };
   return abm;
 }
@@ -37,6 +39,7 @@ void destroy_abm(ABM *abm) {
   free(abm->delays);
   free(abm->final_state);
   free(abm->delayed_idxs);
+  free(abm->error);
   free(abm);
 }
 
@@ -102,4 +105,8 @@ void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len) {
   }
   abm->delayed_idxs = idxs;
   abm->delayed_idxs_len = idxs_len;
+}
+
+char *get_last_error(ABM *abm) {
+  return abm->error;
 }

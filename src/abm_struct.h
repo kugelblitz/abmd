@@ -23,6 +23,7 @@ struct _ABM {
   int (*callback)(double *t, double state[], void *context);
   int *delayed_idxs;
   int delayed_idxs_len;
+  char *error;
 };
 
 #endif //DDE_ABM_STRUCT_H
