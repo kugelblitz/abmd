@@ -66,6 +66,7 @@ void predict(ABMData *abm_data) {
   DOUBLE *out = push(queue);
 
   memset(out, 0, sizeof(DOUBLE) * dim);
+  SETENV;
 
   DOUBLE *diffs = get_diffs_r(queue);
   for (int i = 0; i < dim; i++) {
@@ -115,6 +116,7 @@ void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
 
   if (data->input.f1 == NULL) {
     data->input.f2(x, xs_delayed, dxs_delayed, t, out, data->input.context);
+    SETENV;
     return;
   }
   
@@ -125,6 +127,8 @@ void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
   DOUBLE *out2 = &temp[0];
   memset(out2, 0, sizeof(DOUBLE) * dim);
   data->input.f2(x, xs_delayed, dxs_delayed, t, out2, data->input.context);
+
+  SETENV;
 
   for (int i = 0; i < dim; i++) {
     out[i] += out2[i];
@@ -274,6 +278,8 @@ int run_abm(ABM *abm) {
           .inner_rk_memory=NULL
   };
 
+  SETENV;
+
   // Setting initial conditions for RK4 solution
   for (int i = 0; i < dim; i++) {
     rk4_sol[i] = init[i];
@@ -297,6 +303,7 @@ int run_abm(ABM *abm) {
     DOUBLE *sol_address = push(queue);
     memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(DOUBLE));
     memcpy(&sol_address[dim], &rk4_rhss[i * dim], dim * sizeof(DOUBLE));
+    SETENV;
     update_diffs(queue);
     swap_diffs(queue);
     k++;
@@ -308,16 +315,21 @@ int run_abm(ABM *abm) {
   DOUBLE *callback_state_l = (DOUBLE *) malloc(sizeof(DOUBLE) * dim);
   double *callback_t = abm->callback_t;
 
+  SETENV;
+
   while (run_callback && *callback_t * hsgn <= rk4_t1 * hsgn) {
     evaluate_x_all(queue, *callback_t, callback_state_l);
     for (int i = 0; i < dim; i++) {
       callback_state[i] = (double) callback_state_l[i];
     }
     run_callback = abm->callback(callback_t, callback_state, abm->context);
+    SETENV;
   }
   
   free(rk4_sol);
   free(init);
+
+  SETENV;
 
   // Main ABM loop
   int start_index = rk4_i1 + 1;
@@ -350,6 +362,7 @@ int run_abm(ABM *abm) {
         callback_state[j] = (double) callback_state_l[j];
       }
       run_callback = abm->callback(callback_t, callback_state, abm->context);
+      SETENV;
     }
   }
   

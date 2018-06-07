@@ -97,10 +97,12 @@ void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
   DOUBLE *input = &data[dim * 4];
 
   memcpy(input, x, dim * sizeof(DOUBLE));
+  SETENV;
   f(input, t, k1, context);
 
   if (rhs_out != NULL) {
     memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
+    SETENV;
   }
 
   for (int i = 0; i < dim; i++) {
@@ -146,10 +148,12 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
   DOUBLE *input = &data[dim * 10];
 
   memcpy(input, x, dim * sizeof(DOUBLE));
+  SETENV;
   f(input, t, k1, context);
 
   if (rhs_out != NULL) {
     memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
+    SETENV;
   }
 
   for (int i = 0; i < dim; i++) {
@@ -223,6 +227,7 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
   }
 
   memcpy(out, k5, dim * sizeof(DOUBLE));
+  SETENV;
 }
 
 void rk_step(RHS f, double h, double t, DOUBLE *state, int dim, void *context,

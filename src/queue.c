@@ -54,6 +54,7 @@ Queue *create_queue(int capacity, int dim) {
   queue->lgr_delay_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
   queue->lgr_pointsave_ws = (double *) malloc(capacity * sizeof(double));
   queue->lgr_nom = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
+  SETENV;
   return queue;
 }
 
@@ -175,11 +176,13 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
     DOUBLE *x = get(q, (int) round(t_idx));
     if (idxs == NULL) {
       memcpy(out, x, idxs_len * sizeof(DOUBLE));
+      SETENV;
       return;
     }
     for (int j = 0; j < idxs_len; j++) {
       out[j] = x[idxs[j]];
     }
+    SETENV;
     return;
   }
 
@@ -194,6 +197,7 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
   DOUBLE *nom = q->lgr_nom;
   memset(nom, 0, q->dim * sizeof(DOUBLE));
   DOUBLE denom = 0;
+  SETENV;
   for (int i = 0; i < n_points; i++) {
     double tti = t - (q->t0 + (i + left) * q->h);
     double coef = ws[i] / tti;

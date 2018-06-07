@@ -1,6 +1,13 @@
 #ifndef DDE_ABM_H
 #define DDE_ABM_H
 
+#ifdef __MINGW32__
+#include <fenv.h>
+#define SETENV fesetenv(FE_PC64_ENV)
+#else
+#define SETENV
+#endif
+
 #ifdef USE_LONG_DOUBLE
 typedef long double DOUBLE;
 
