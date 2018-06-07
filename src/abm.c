@@ -35,16 +35,20 @@ typedef struct {
   double rk4_h;
   DOUBLE *temp;
   Queue *queue;
-  DOUBLE *states;
-  DOUBLE *states_tmp;
+  DOUBLE *xs_delayed;
+  DOUBLE *xs_delayed_inner;
+  DOUBLE *xs_delayed_tmp;
+  DOUBLE *dxs_delayed;
   DOUBLE *rk_memory;
   DOUBLE *inner_rk_memory;
 } ABMData;
 
 void destroy_abm_data(ABMData abm_data) {
   free(abm_data.temp);
-  free(abm_data.states);
-  free(abm_data.states_tmp);
+  free(abm_data.xs_delayed);
+  free(abm_data.xs_delayed_inner);
+  free(abm_data.xs_delayed_tmp);
+  free(abm_data.dxs_delayed);
   free(abm_data.rk_memory);
   free(abm_data.inner_rk_memory);
   destroy_queue(abm_data.queue);
@@ -91,9 +95,18 @@ void correct(ABMData *abm_data, DOUBLE *x_predicted) {
   }
 }
 
+void copy_delayed_states(DOUBLE x[], DOUBLE xs_delayed[], int ndelays,
+                         int *idxs, int idxs_len) {
+  for (int i = 0; i < ndelays; i++) {
+    for (int j = 0; j < idxs_len; j++) {
+      int idx = (idxs == NULL) ? j : idxs[j];
+      xs_delayed[i * idxs_len + j] = x[idx];
+    }
+  }
+}
 
-void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
-         DOUBLE *out, void *abm_data) {
+void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
+         double t, DOUBLE *out, void *abm_data) {
   ABMData *data = (ABMData *)abm_data;
   int dim = data->input.dim;
   DOUBLE *temp = data->temp;
@@ -101,92 +114,82 @@ void rhs(DOUBLE states[], DOUBLE dotstates[], double t,
   memset(out, 0, sizeof(DOUBLE) * dim);
   
   if (data->input.f1 != NULL) {
-    data->input.f1(states, t, out, data->input.context);
+    data->input.f1(x, t, out, data->input.context);
     
     if (data->input.f2 != NULL) {
       DOUBLE *out2 = &temp[0];
       
       memset(out2, 0, sizeof(DOUBLE) * dim);
-      data->input.f2(states, dotstates, t, out2, data->input.context);
+      data->input.f2(x, xs_delayed, dxs_delayed, t, out2, data->input.context);
       for (int i = 0; i < dim; i++) {
         out[i] += out2[i];
       }
     }
   } else if (data->input.f2 != NULL) {
-    data->input.f2(states, dotstates, t, out, data->input.context);
+    data->input.f2(x, xs_delayed, dxs_delayed, t, out, data->input.context);
   }
 }
 
-void rhs_rk4(DOUBLE state[], DOUBLE dotstates[], double t,
-             DOUBLE *out, void *abm_data) {
+void rhs_rk_inner(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
+  ABMData *data = (ABMData *) abm_data;
+  int ndelays = data->input.ndelays;
+  int *idxs = data->input.delayed_idxs;
+  int idxs_len = data->input.delayed_idxs_len;
+  DOUBLE *xs_delayed = data->xs_delayed_inner;
+  copy_delayed_states(x, xs_delayed, ndelays, idxs, idxs_len);
+  rhs(x, xs_delayed, NULL, t, out, data);
+}
 
-  ABMData *data = (ABMData *)abm_data;
+void rhs_rk4(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
+
+  ABMData *data = (ABMData *) abm_data;
   int dim = data->input.dim;
   int ndelays = data->input.ndelays;
-  int *delayed_idxs = data->input.delayed_idxs;
-  int delayed_idxs_len = data->input.delayed_idxs_len;
+  int *idxs = data->input.delayed_idxs;
+  int idxs_len = data->input.delayed_idxs_len;
 
-  DOUBLE *states_tmp = data->states_tmp;
-  DOUBLE *states = data->states;
+  DOUBLE *xs_delayed = data->xs_delayed;
+  DOUBLE *xs_delayed_tmp = data->xs_delayed_tmp;
+
 
   for (int i = 0; i < ndelays; i++) {
     double delay = data->input.delays[i];
-    if (delay == 0) {
-      memcpy(&states_tmp[i * dim], state, dim * sizeof(DOUBLE));
-      continue;
-    }
-    rk_step(rhs, -delay, t, state, dim, ndelays, delayed_idxs, delayed_idxs_len,
-            data, &states_tmp[i * dim], NULL, &data->inner_rk_memory, METHOD_RK4);
+    rk_step(rhs_rk_inner, -delay, t, x, dim, data, &xs_delayed_tmp[i * dim],
+            NULL, &data->inner_rk_memory, METHOD_RK4);
   }
 
-  memcpy(states, states_tmp, dim * sizeof(DOUBLE));
 
-  for (int i = 1; i < ndelays; i++) {
-    for (int j = 0; j < delayed_idxs_len; j++) {
-      int idx = delayed_idxs == NULL ? j : delayed_idxs[j];
-      states[dim + (i - 1) * delayed_idxs_len + j] = states_tmp[i * dim + idx];
+  for (int i = 0; i < ndelays; i++) {
+    for (int j = 0; j < idxs_len; j++) {
+      int idx = (idxs == NULL) ? j : idxs[j];
+      xs_delayed[i * idxs_len + j] = xs_delayed_tmp[i * dim + idx];
     }
   }
 
-  rhs(states, NULL, t, out, data);
+  rhs(x, xs_delayed, NULL, t, out, data);
 }
 
-void get_delayed_states(ABMData *abm_data, double ti, DOUBLE *out) {
-  int dim = abm_data->input.dim;
+void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
+                        DOUBLE *x_out, DOUBLE *dx_out) {
+
+  Queue *q = abm_data->queue;
   int ndelays = abm_data->input.ndelays;
   double *delays = abm_data->input.delays;
+  int *idxs = abm_data->input.delayed_idxs;
+  int idxs_len = abm_data->input.delayed_idxs_len;
 
-  for (int j = 0; j < ndelays; j++) {
-    double delay = delays[j];
-    double t_delayed = ti - delay;
-    int all_idxs = (j == 0);
+  for (int i = 0; i < ndelays; i++) {
+    double delay = delays[i];
+    double t = ti - delay;
 
-    int *idxs = all_idxs ? NULL : abm_data->input.delayed_idxs;
-    int idxs_len = all_idxs ? dim : abm_data->input.delayed_idxs_len;
+    evaluate_x_idxs(q, t, idxs, idxs_len, &x_out[i * idxs_len]);
 
-    evaluate_x_idxs(abm_data->queue, t_delayed, idxs, idxs_len, &out[j * dim]);
+    if (dx_out == NULL) continue;
+
+    evaluate_xdot(q, t, idxs, idxs_len, last_dx_known, &dx_out[i * idxs_len]);
   }
 }
 
-void get_delayed_dotstates(ABMData *abm_data, double ti,
-                           int last_known, DOUBLE *out) {
-
-  if (out == NULL) return;
-
-  int dim = abm_data->input.dim;
-  int ndelays = abm_data->input.ndelays;
-  double *delays = abm_data->input.delays;
-
-  int i = 0;
-  for (int j = 0; j < ndelays; j++) {
-    double delay = delays[j];
-    if (delay == 0) continue;
-    double t_delayed = ti - delay;
-    evaluate_xdot(abm_data->queue, t_delayed, abm_data->input.delayed_idxs,
-                  abm_data->input.delayed_idxs_len, last_known, &out[i * dim]);
-    i += 1;
-  }
-}
 
 void run_abm(ABM *abm) {
 
@@ -194,7 +197,6 @@ void run_abm(ABM *abm) {
   int abm_order = abm->abm_order;
   double t0 = abm->t0;
   double t1 = abm->t1;
-  double *delays = abm->delays;
   int ndelays = abm->ndelays;
 
   int hsgn = (t1 > t0) - (t1 < t0);
@@ -212,11 +214,6 @@ void run_abm(ABM *abm) {
 
   int RK_STEPS_IN_ABM = 8;
 
-  int non_zero_delays = 0;
-  for (int i = 0; i < ndelays; i++) {
-    if (delays[i] != 0) non_zero_delays += 1;
-  }
-
   int n = (int)(1 + (t1 - t0) / h);
   int rk4_i1 = abm_order - 1;
   rk4_i1 += 1;  // One more step to fill the whole queue with RK data
@@ -228,14 +225,13 @@ void run_abm(ABM *abm) {
   DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
   DOUBLE *rk4_rhss = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
   DOUBLE *rhs_temp = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * dim);
-  DOUBLE *states_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
-  DOUBLE *states = (DOUBLE *) malloc(sizeof(DOUBLE) * (dim +
-                                     abm->delayed_idxs_len * (ndelays - 1)));
-  DOUBLE *dotstates = NULL;
-  if (non_zero_delays > 0) {
-    dotstates = (DOUBLE *) malloc(sizeof(DOUBLE) * dim *
-                                  abm->delayed_idxs_len * non_zero_delays);
-  }
+  DOUBLE *xs_delayed_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
+
+  size_t delayed_size = abm->delayed_idxs_len * ndelays * sizeof(DOUBLE);
+
+  DOUBLE *xs_delayed = (DOUBLE *) malloc(delayed_size);
+  DOUBLE *xs_delayed_inner = (DOUBLE *) malloc(delayed_size);
+  DOUBLE *dxs_delayed = (DOUBLE *) malloc(delayed_size);
 
   int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, dim);
@@ -249,8 +245,10 @@ void run_abm(ABM *abm) {
           .rk4_h=rk4_h,
           .temp=rhs_temp,
           .queue=queue,
-          .states=states,
-          .states_tmp=states_tmp,
+          .xs_delayed=xs_delayed,
+          .xs_delayed_inner=xs_delayed_inner,
+          .xs_delayed_tmp=xs_delayed_tmp,
+          .dxs_delayed=dxs_delayed,
           .rk_memory=NULL,
           .inner_rk_memory=NULL
   };
@@ -263,16 +261,14 @@ void run_abm(ABM *abm) {
   // Doing rk4_n RK4 steps
   for (int i = 1; i < rk4_n + 1; i++) {
     double t = t0 + rk4_h * (i - 1);
-    rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, 1,
-            abm->delayed_idxs, abm->delayed_idxs_len, &abm_data,
+    rk_step(rhs_rk4, rk4_h, t, &rk4_sol[(i - 1) * dim], dim, &abm_data,
             &rk4_sol[i * dim], &rk4_rhss[(i - 1) * dim], &abm_data.rk_memory,
             METHOD_DOPRI8);
   }
 
   // Computing last RHS
   int last = rk4_n * dim;
-  rhs_rk4(&rk4_sol[last], NULL, t0 + rk4_h * rk4_n,
-          &rk4_rhss[last], &abm_data);
+  rhs_rk4(&rk4_sol[last], t0 + rk4_h * rk4_n, &rk4_rhss[last], &abm_data);
 
   // Writing data from RK4 to the queue
   int k = 0;
@@ -309,18 +305,16 @@ void run_abm(ABM *abm) {
 
     predict(&abm_data);
     DOUBLE *rhs_out = peek_right_dx(queue);
-    get_delayed_states(&abm_data, t, states);
-    get_delayed_dotstates(&abm_data, t, 0, dotstates);
-    rhs(states, dotstates, t, rhs_out, &abm_data);
+    get_delayed_states(&abm_data, t, 0, xs_delayed, dxs_delayed);
+    rhs(peek_right_x(queue), xs_delayed, dxs_delayed, t, rhs_out, &abm_data);
 
     update_diffs(queue);
     DOUBLE *predicted = peek_right_x(queue);
     backup_last_x(queue);
     correct(&abm_data, predicted);
 
-    get_delayed_states(&abm_data, t, states);
-    get_delayed_dotstates(&abm_data, t, 1, dotstates);
-    rhs(states, dotstates, t, rhs_out, &abm_data);
+    get_delayed_states(&abm_data, t, 1, xs_delayed, dxs_delayed);
+    rhs(peek_right_x(queue), xs_delayed, dxs_delayed, t, rhs_out, &abm_data);
 
     update_diffs(queue);
     restore_last_x(queue);
@@ -343,7 +337,6 @@ void run_abm(ABM *abm) {
   }
 
   destroy_abm_data(abm_data);
-  free(dotstates);
   free(callback_state);
   free(callback_state_l);
 }

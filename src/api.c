@@ -6,10 +6,8 @@
 
 #define ABM_ORDER 11
 
-ABM *create_abm(RHS1 f, int dim, double t0, double t1, double h, double *init) {
+ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init) {
   ABM *abm = (ABM *) malloc(sizeof(ABM));
-  double *delays = (double *) malloc(sizeof(double));
-  delays[0] = 0;
   double *final_state = (double *) malloc(sizeof(double) * dim);
   *abm = (ABM) {
           .f1=f,
@@ -19,8 +17,8 @@ ABM *create_abm(RHS1 f, int dim, double t0, double t1, double h, double *init) {
           .t1=t1,
           .h=h,
           .init=init,
-          .delays=delays,
-          .ndelays=1,
+          .delays=NULL,
+          .ndelays=0,
           .abm_order=ABM_ORDER,
           .delays_poly_degree=ABM_ORDER,
           .pointsave_poly_degree=ABM_ORDER,
@@ -66,7 +64,7 @@ void set_pointsave_poly_degree(ABM *abm, int deg) {
   abm->pointsave_poly_degree = deg;
 }
 
-void set_f2(ABM *abm, RHS2 f2) {
+void set_f2(ABM *abm, RHSD f2) {
   abm->f2 = f2;
 }
 

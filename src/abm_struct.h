@@ -4,8 +4,8 @@
 #include "abm.h"
 
 struct _ABM {
-  RHS1 f1;
-  RHS2 f2;
+  RHS f1;
+  RHSD f2;
   int dim;
   double t0;
   double t1;

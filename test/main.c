@@ -37,7 +37,7 @@ int callback_back(double *t, double *state, void *context) {
   return 1;
 }
 
-void calc_difference(RHS1 f) {
+void calc_difference(RHSD f) {
   int order = 11;
 //  double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
@@ -70,8 +70,9 @@ void calc_difference(RHS1 f) {
           .sol_back=sol_back
   };
 
-  ABM *abm = create_abm(f, dim, t0, t1, h, init);
-  set_delays(abm, (double[]){0, delay}, 2);
+  ABM *abm = create_abm(NULL, dim, t0, t1, h, init);
+  set_f2(abm, f);
+  set_delays(abm, (double[]){delay}, 1);
   set_callback(abm, callback_there, &callback_t);
   set_context(abm, &abm_test);
   set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4);
@@ -89,8 +90,9 @@ void calc_difference(RHS1 f) {
     sol_reversed[i * dim + 3] *= -1;
   }
 
-  abm = create_abm(f, dim, t1, t0, h, &sol[(sol_size - 1) * dim]);
-  set_delays(abm, (double[]){0, delay}, 2);
+  abm = create_abm(NULL, dim, t1, t0, h, &sol[(sol_size - 1) * dim]);
+  set_f2(abm, f);
+  set_delays(abm, (double[]){delay}, 1);
   set_callback(abm, callback_back, &callback_t);
   set_context(abm, &abm_test);
   callback_t = t1;
@@ -117,7 +119,8 @@ void calc_difference(RHS1 f) {
   free(diff);
 }
 
-void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
+void orbit(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
+           double t, DOUBLE *out, void *context) {
   int dim = 4;
   const DOUBLE G = 0.49821740236800005;
   const double m1 = 5.972e24;
@@ -125,16 +128,16 @@ void orbit(DOUBLE states[], double t, DOUBLE *out, void *context) {
   const DOUBLE mu1 = G * m1;
   const DOUBLE mu2 = G * m2;
   const DOUBLE q = mu1 + mu2;
-  DOUBLE x_delayed = states[DIM];
-  DOUBLE y_delayed = states[DIM + 1];
+  DOUBLE x_delayed = xs_delayed[0];
+  DOUBLE y_delayed = xs_delayed[1];
   for (int i = 0; i < DIM; i += 4) {
-    DOUBLE x = states[i];
-    DOUBLE vx = states[i + 1];
-    DOUBLE y = states[i + 2];
-    DOUBLE vy = states[i + 3];
-    DOUBLE r = sqrt(x * x + y * y);
+    DOUBLE x_ = x[i];
+    DOUBLE vx = x[i + 1];
+    DOUBLE y = x[i + 2];
+    DOUBLE vy = x[i + 3];
+    DOUBLE r = sqrt(x_ * x_ + y * y);
     out[i] = vx;
-    out[i + 1] = -q * x / (r * r * r);
+    out[i + 1] = -q * x_ / (r * r * r);
     out[i + 2] = vy;
     out[i + 3] = -q * y / (r * r * r);
     const int ae = 6371000;

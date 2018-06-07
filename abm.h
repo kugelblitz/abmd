@@ -15,19 +15,19 @@ typedef double DOUBLE;
 
 typedef struct _ABM ABM;
 
-typedef void (*RHS1)(DOUBLE states[], double t, DOUBLE *out, void *context);
+typedef void (*RHS)(DOUBLE x[], double t, DOUBLE *out, void *context);
 
-typedef void (*RHS2)(DOUBLE states[], DOUBLE dotstates[],
+typedef void (*RHSD)(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
                      double t, DOUBLE *out, void *context);
 
 void run_abm(ABM *);
-ABM *create_abm(RHS1 f, int dim, double t0, double t1, double h, double *init);
+ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init);
 void destroy_abm(ABM *abm);
 void set_abm_order(ABM *abm, int order);
 void set_delays(ABM *abm, double *delays, int ndelays);
 void set_delays_poly_degree(ABM *abm, int deg);
 void set_pointsave_poly_degree(ABM *abm, int deg);
-void set_f2(ABM *abm, RHS2 f2);
+void set_f2(ABM *abm, RHSD f2);
 void set_context(ABM *abm, void *context);
 void set_init_call(ABM *abm, void (*init_call)(DOUBLE[], void*));
 void set_callback(ABM *abm, int (*callback)(double *, double[], void*),
