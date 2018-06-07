@@ -226,9 +226,10 @@ void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out) {
 
 void evaluate_xdot(Queue *q, double t, int *idxs, int idxs_len,
                    int last_known, DOUBLE *out) {
+  int deg = q->delays_poly_degree;
   double *ws = q->lgr_delay_ws;
-  int n_points = q->delays_poly_degree + 1;
-  if (!last_known && q->pointsave_poly_degree == get_capacity(q) - 1) {
+  int n_points = deg + 1;
+  if (!last_known && deg == get_capacity(q) - 1) {
     ws = q->lgr_delay_ws_nolast;
     n_points -= 1;
   }
