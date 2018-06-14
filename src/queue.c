@@ -193,30 +193,37 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
     left = (int) t_idx;
   }
 
-  memset(out, 0, idxs_len * sizeof(DOUBLE));
   DOUBLE denom = 0;
-  SETENV;
-  
   DOUBLE coefs[20]; // should be enough given that the order does not exceed 19
+  DOUBLE *xs[20];
   
+  SETENV;
   for (int i = 0; i < n_points; i++) {
     double tti = t - (q->t0 + (i + left) * q->h);
     coefs[i] = ws[i] / tti;
     denom += coefs[i];
   }
   for (int i = 0; i < n_points; i++)
+  {
     coefs[i] /= denom;
-  
-  for (int i = 0; i < n_points; i++) {
-    DOUBLE *x = get(q, i + left);
-    if (idxs == NULL) {
-      for (int j = 0; j < idxs_len; j++) {
-        out[j] += coefs[i] * x[j];
+    xs[i] = get(q, i + left);
+  }
+
+  if (idxs == NULL) {
+    for (int j = 0; j < idxs_len; j++) {
+      DOUBLE res = 0;
+      for (int i = 0; i < n_points; i++) {
+        res += coefs[i] * xs[i][j];
       }
-    } else {
-      for (int j = 0; j < idxs_len; j++) {
-        out[j] += coefs[i] * x[idxs[j]];
+      out[j] = res;
+    }
+  } else {
+    for (int j = 0; j < idxs_len; j++) {
+      DOUBLE res = 0;
+      for (int i = 0; i < n_points; i++) {
+        res += coefs[i] * xs[i][idxs[j]];
       }
+      out[j] = res;
     }
   }
 }
