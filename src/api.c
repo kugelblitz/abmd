@@ -63,8 +63,10 @@ void set_delays(ABM *abm, double *delays, int ndelays) {
 
     int **idxs = (int **) malloc(sizeof(int *) * ndelays);
     int *idxs_lens = (int *) malloc(sizeof(int) * ndelays);
-    memset(idxs, NULL, sizeof(int *) * ndelays);
-    memset(idxs_lens, abm->dim, sizeof(int) * ndelays);
+    for (int i = 0; i < ndelays; i++) {
+      idxs[i] = NULL;
+      idxs_lens[i] = abm->dim;
+    }
     abm->delayed_idxs = idxs;
     abm->delayed_idxs_lens = idxs_lens;
   }
