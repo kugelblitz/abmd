@@ -163,11 +163,12 @@ void rhs_rk4(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
             NULL, &data->inner_rk_memory, METHOD_RK4);
   }
 
-
+  int k = 0;
   for (int i = 0; i < ndelays; i++) {
     for (int j = 0; j < idxs_lens[i]; j++) {
       int idx = (idxs[i] == NULL) ? j : idxs[i][j];
-      *xs_delayed++ = xs_delayed_tmp[i * dim + idx];
+      xs_delayed[k] = xs_delayed_tmp[i * dim + idx];
+      k++;
     }
   }
 
