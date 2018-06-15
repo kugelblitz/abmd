@@ -97,11 +97,11 @@ void correct(ABMData *abm_data, DOUBLE *x_predicted) {
 }
 
 void copy_delayed_states(DOUBLE x[], DOUBLE xs_delayed[], int ndelays,
-                         int *idxs, int idxs_len) {
+                         int **idxs, int *idxs_lens) {
   for (int i = 0; i < ndelays; i++) {
-    for (int j = 0; j < idxs_len; j++) {
-      int idx = (idxs == NULL) ? j : idxs[j];
-      xs_delayed[i * idxs_len + j] = x[idx];
+    for (int j = 0; j < idxs_lens[i]; j++) {
+      int idx = (idxs[i] == NULL) ? j : idxs[i][j];
+      *xs_delayed++ = x[idx];
     }
   }
 }
@@ -138,10 +138,10 @@ void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
 void rhs_rk_inner(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
   ABMData *data = (ABMData *) abm_data;
   int ndelays = data->input.ndelays;
-  int *idxs = data->input.delayed_idxs;
-  int idxs_len = data->input.delayed_idxs_len;
+  int **idxs = data->input.delayed_idxs;
+  int *idxs_lens = data->input.delayed_idxs_lens;
   DOUBLE *xs_delayed = data->xs_delayed_inner;
-  copy_delayed_states(x, xs_delayed, ndelays, idxs, idxs_len);
+  copy_delayed_states(x, xs_delayed, ndelays, idxs, idxs_lens);
   rhs(x, xs_delayed, NULL, t, out, data);
 }
 
@@ -150,8 +150,8 @@ void rhs_rk4(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
   ABMData *data = (ABMData *) abm_data;
   int dim = data->input.dim;
   int ndelays = data->input.ndelays;
-  int *idxs = data->input.delayed_idxs;
-  int idxs_len = data->input.delayed_idxs_len;
+  int **idxs = data->input.delayed_idxs;
+  int *idxs_lens = data->input.delayed_idxs_lens;
 
   DOUBLE *xs_delayed = data->xs_delayed;
   DOUBLE *xs_delayed_tmp = data->xs_delayed_tmp;
@@ -165,9 +165,9 @@ void rhs_rk4(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
 
 
   for (int i = 0; i < ndelays; i++) {
-    for (int j = 0; j < idxs_len; j++) {
-      int idx = (idxs == NULL) ? j : idxs[j];
-      xs_delayed[i * idxs_len + j] = xs_delayed_tmp[i * dim + idx];
+    for (int j = 0; j < idxs_lens[i]; j++) {
+      int idx = (idxs[i] == NULL) ? j : idxs[i][j];
+      *xs_delayed++ = xs_delayed_tmp[i * dim + idx];
     }
   }
 
@@ -180,18 +180,20 @@ void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
   Queue *q = abm_data->queue;
   int ndelays = abm_data->input.ndelays;
   double *delays = abm_data->input.delays;
-  int *idxs = abm_data->input.delayed_idxs;
-  int idxs_len = abm_data->input.delayed_idxs_len;
+  int **idxs = abm_data->input.delayed_idxs;
+  int *idxs_lens = abm_data->input.delayed_idxs_lens;
+  int start_idx = 0;
 
   for (int i = 0; i < ndelays; i++) {
     double delay = delays[i];
     double t = ti - delay;
 
-    evaluate_x_idxs(q, t, idxs, idxs_len, &x_out[i * idxs_len]);
-
-    if (dx_out == NULL) continue;
-
-    evaluate_dx(q, t, idxs, idxs_len, last_dx_known, &dx_out[i * idxs_len]);
+    evaluate_x_idxs(q, t, idxs[i], idxs_lens[i], &x_out[start_idx]);
+    if (dx_out != NULL) {
+      evaluate_dx(q, t, idxs[i], idxs_lens[i], last_dx_known,
+                  &dx_out[start_idx]);
+    }
+    start_idx += idxs_lens[i];
   }
 }
 
@@ -252,7 +254,11 @@ int run_abm(ABM *abm) {
   DOUBLE *rhs_temp = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * dim);
   DOUBLE *xs_delayed_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
 
-  size_t delayed_size = abm->delayed_idxs_len * ndelays * sizeof(DOUBLE);
+  int total_delays_len = 0;
+  for (int i = 0; i < ndelays; i++) {
+    total_delays_len += abm->delayed_idxs_lens[i];
+  }
+  size_t delayed_size = total_delays_len * sizeof(DOUBLE);
 
   DOUBLE *xs_delayed = (DOUBLE *) malloc(delayed_size);
   DOUBLE *xs_delayed_inner = (DOUBLE *) malloc(delayed_size);

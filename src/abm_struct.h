@@ -21,8 +21,8 @@ struct _ABM {
   void (*init_call)(DOUBLE[], void*);
   double *callback_t;
   int (*callback)(double *t, double state[], void *context);
-  int *delayed_idxs;
-  int delayed_idxs_len;
+  int **delayed_idxs;
+  int *delayed_idxs_lens;
   char *error;
 };
 

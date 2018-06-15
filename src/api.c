@@ -29,7 +29,7 @@ ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init) {
           .callback_t=NULL,
           .callback=NULL,
           .delayed_idxs=NULL,
-          .delayed_idxs_len=dim,
+          .delayed_idxs_lens=NULL,
           .error=error
   };
   return abm;
@@ -38,7 +38,11 @@ ABM *create_abm(RHS f, int dim, double t0, double t1, double h, double *init) {
 void destroy_abm(ABM *abm) {
   free(abm->delays);
   free(abm->final_state);
+  for (int i = 0; i < abm->ndelays; i++) {
+    free(abm->delayed_idxs[i]);
+  }
   free(abm->delayed_idxs);
+  free(abm->delayed_idxs_lens);
   free(abm->error);
   free(abm);
 }
@@ -56,6 +60,13 @@ void set_delays(ABM *abm, double *delays, int ndelays) {
   if (ndelays > 0) {
     abm->delays = malloc(sizeof(double) * ndelays);
     memcpy(abm->delays, delays, sizeof(double) * ndelays);
+
+    int **idxs = (int **) malloc(sizeof(int *) * ndelays);
+    int *idxs_lens = (int *) malloc(sizeof(int) * ndelays);
+    memset(idxs, NULL, sizeof(int *) * ndelays);
+    memset(idxs_lens, abm->dim, sizeof(int) * ndelays);
+    abm->delayed_idxs = idxs;
+    abm->delayed_idxs_lens = idxs_lens;
   }
 }
 
@@ -89,8 +100,8 @@ double *get_final_state(ABM *abm) {
   return abm->final_state;
 }
 
-void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len) {
-  free(abm->delayed_idxs);
+void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len, int delay_idx) {
+  free(abm->delayed_idxs[delay_idx]);
   int idxs_len = 0;
   for (int i = 0; i < ranges_len; i += 2) {
     idxs_len += ranges[i + 1] - ranges[i];
@@ -103,8 +114,8 @@ void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len) {
       k += 1;
     }
   }
-  abm->delayed_idxs = idxs;
-  abm->delayed_idxs_len = idxs_len;
+  abm->delayed_idxs[delay_idx] = idxs;
+  abm->delayed_idxs_lens[delay_idx] = idxs_len;
 }
 
 char *get_last_error(ABM *abm) {
