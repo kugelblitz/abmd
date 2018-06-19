@@ -23,6 +23,8 @@ struct _ABM {
   int (*callback)(double *t, double state[], void *context);
   int **delayed_idxs;
   int *delayed_idxs_lens;
+  int *dx_delays_idxs;
+  int dx_delays_len;
   char *error;
 };
 

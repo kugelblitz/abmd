@@ -183,18 +183,29 @@ void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
   double *delays = abm_data->input.delays;
   int **idxs = abm_data->input.delayed_idxs;
   int *idxs_lens = abm_data->input.delayed_idxs_lens;
-  int start_idx = 0;
+  int x_start_idx = 0;
 
   for (int i = 0; i < ndelays; i++) {
     double delay = delays[i];
     double t = ti - delay;
 
-    evaluate_x_idxs(q, t, idxs[i], idxs_lens[i], &x_out[start_idx]);
-    if (dx_out != NULL) {
-      evaluate_dx(q, t, idxs[i], idxs_lens[i], last_dx_known,
-                  &dx_out[start_idx]);
-    }
-    start_idx += idxs_lens[i];
+    evaluate_x_idxs(q, t, idxs[i], idxs_lens[i], &x_out[x_start_idx]);
+    x_start_idx += idxs_lens[i];
+  }
+
+  if (dx_out == NULL) {
+    return;
+  }
+
+  int dx_start_idx = 0;
+  int *dx_delay_idxs = abm_data->input.dx_delays_idxs;
+
+  for (int i = 0; i < abm_data->input.dx_delays_len; i++) {
+    int delay_idx = dx_delay_idxs == NULL ? i : dx_delay_idxs[i];
+    double t = ti - delays[delay_idx];
+    evaluate_dx(q, t, idxs[i], idxs_lens[i], last_dx_known,
+                &dx_out[dx_start_idx]);
+    dx_start_idx += idxs_lens[i];
   }
 }
 
@@ -255,15 +266,21 @@ int run_abm(ABM *abm) {
   DOUBLE *rhs_temp = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * dim);
   DOUBLE *xs_delayed_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
 
-  int total_delays_len = 0;
+  int x_total_delays_len = 0;
+  int dx_total_delays_len = 0;
   for (int i = 0; i < ndelays; i++) {
-    total_delays_len += abm->delayed_idxs_lens[i];
+    x_total_delays_len += abm->delayed_idxs_lens[i];
   }
-  size_t delayed_size = total_delays_len * sizeof(DOUBLE);
+  for (int i = 0; i < abm->dx_delays_len; i++) {
+    int *idxs = abm->dx_delays_idxs;
+    int delay_idx = idxs == NULL ? i : idxs[i];
+    dx_total_delays_len += abm->delayed_idxs_lens[delay_idx];
+  }
+  size_t x_delayed_size = x_total_delays_len * sizeof(DOUBLE);
 
-  DOUBLE *xs_delayed = (DOUBLE *) malloc(delayed_size);
-  DOUBLE *xs_delayed_inner = (DOUBLE *) malloc(delayed_size);
-  DOUBLE *dxs_delayed = (DOUBLE *) malloc(delayed_size);
+  DOUBLE *xs_delayed = (DOUBLE *) malloc(x_delayed_size);
+  DOUBLE *xs_delayed_inner = (DOUBLE *) malloc(x_delayed_size);
+  DOUBLE *dxs_delayed = (DOUBLE *) malloc(dx_total_delays_len * sizeof(DOUBLE));
 
   int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, dim);

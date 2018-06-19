@@ -40,6 +40,7 @@ void set_callback(ABM *abm, int (*callback)(double *, double[], void*),
                   double *callback_t);
 double *get_final_state(ABM *abm);
 void set_delayed_ranges(ABM *abm, int *ranges, int ranges_len, int delay_idx);
+void set_dx_delays(ABM *abm, int *idxs, int idxs_len);
 char *get_last_error(ABM *abm);
 
 #endif //DDE_ABM_H
