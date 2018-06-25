@@ -1,7 +1,7 @@
 #ifndef DDE_QUEUE_H
 #define DDE_QUEUE_H
 
-#include "abm.h"
+#include "abmd.h"
 
 typedef struct _Queue Queue;
 

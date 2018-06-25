@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "abm.h"
+#include "abmd.h"
 #include "abm_struct.h"
 #include "rk.h"
 #include "queue.h"
@@ -31,7 +31,7 @@ static DOUBLE PREDICTOR_COEFFS[19] = {
 
 
 typedef struct {
-  ABM input;
+  ABMD input;
   double rk4_h;
   DOUBLE *temp;
   Queue *queue;
@@ -210,7 +210,7 @@ void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
 }
 
 
-int run_abm(ABM *abm) {
+int run_abm(ABMD *abm) {
 
   int abm_order = abm->abm_order;
 

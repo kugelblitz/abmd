@@ -3,11 +3,12 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <assert.h>
 
-#include "abm.h"
+#include "abmd.h"
 #include "plot.h"
 
-#define DIM 4000
+#define DIM 4
 
 typedef struct {
   double *callback_t;
@@ -22,8 +23,8 @@ int callback_there(double *t, double *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(double));
   abm_test->i++;
-//  t[0] += 1 / 32.0;
-  t[0] += 1 / 16.0;
+  t[0] += 1 / 32.0;
+//  t[0] += 1 / 16.0;
   return 1;
 }
 
@@ -32,8 +33,8 @@ int callback_back(double *t, double *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state, dim * sizeof(double));
   abm_test->i++;
-//  t[0] -= 1 / 32.0;
-  t[0] -= 1 / 16.0;
+  t[0] -= 1 / 32.0;
+//  t[0] -= 1 / 16.0;
   return 1;
 }
 
@@ -43,8 +44,8 @@ void calc_difference(RHSD f) {
   double t0 = 0;
   double t1 = 365;
   double h = 1 / 16.0;
-//  double delay = 0.096;
-  double delay = 0;
+  double delay = 0.096;
+//  double delay = 0;
   int dim = DIM;
   double *init = malloc(dim * sizeof(double));
   for (int i = 0; i < dim; i += 4) {
@@ -56,8 +57,8 @@ void calc_difference(RHSD f) {
 
 
   int n = (int)(1 + (t1 - t0) / h);
-//  int sol_size = 2 * n - 1;
-  int sol_size = n;
+  int sol_size = 2 * n - 1;
+//  int sol_size = n;
   double *sol = (double *) malloc(sizeof(double) * sol_size * dim);
   double *sol_back = (double *) malloc(sizeof(double) * sol_size * dim);
   double callback_t = 0;
@@ -70,16 +71,20 @@ void calc_difference(RHSD f) {
           .sol_back=sol_back
   };
 
-  ABM *abm = create_abm(NULL, dim, t0, t1, h, init);
-  set_f2(abm, f);
-  set_delays(abm, (double[]){delay}, 1);
-  set_callback(abm, callback_there, &callback_t);
-  set_context(abm, &abm_test);
-  set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4);
+  ABMD *abm = abmd_create(NULL, dim, t0, t1, h, init);
+  abmd_set_f2(abm, f);
+  abmd_set_delays_poly_degree(abm, 8);
+  abmd_set_pointsave_poly_degree(abm, 8);
+  abmd_set_delays(abm, (double[]) {delay, delay}, 2);
+  abmd_set_callback(abm, callback_there, &callback_t);
+  abmd_set_context(abm, &abm_test);
+  abmd_set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4, 0);
+  abmd_set_delayed_ranges(abm, (int[]) {0, 4}, 2, 1);
+  abmd_set_dx_delays(abm, (int[]) {0, 1}, 2);
 
   run_abm(abm);
-  printf("Final: %e %e\n", get_final_state(abm)[0], get_final_state(abm)[2]);
-  destroy_abm(abm);
+  printf("Final: %e %e\n", abmd_get_final_state(abm)[0], abmd_get_final_state(abm)[2]);
+  abmd_destroy(abm);
   printf("-----------------------------------------------------------\n");
 
   double *sol_reversed = malloc(sizeof(double) * sol_size * dim);
@@ -90,17 +95,21 @@ void calc_difference(RHSD f) {
     sol_reversed[i * dim + 3] *= -1;
   }
 
-  abm = create_abm(NULL, dim, t1, t0, h, &sol[(sol_size - 1) * dim]);
-  set_f2(abm, f);
-  set_delays(abm, (double[]){delay}, 1);
-  set_callback(abm, callback_back, &callback_t);
-  set_context(abm, &abm_test);
+  abm = abmd_create(NULL, dim, t1, t0, h, &sol[(sol_size - 1) * dim]);
+  abmd_set_f2(abm, f);
+  abmd_set_delays_poly_degree(abm, 8);
+  abmd_set_pointsave_poly_degree(abm, 8);
+  abmd_set_delays(abm, (double[]) {delay, delay}, 2);
+  abmd_set_callback(abm, callback_back, &callback_t);
+  abmd_set_context(abm, &abm_test);
   callback_t = t1;
   abm_test.i = 0;
-  set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4);
+  abmd_set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4, 0);
+  abmd_set_delayed_ranges(abm, (int[]) {0, 4}, 2, 1);
+  abmd_set_dx_delays(abm, (int[]) {0, 1}, 2);
 
   run_abm(abm);
-  destroy_abm(abm);
+  abmd_destroy(abm);
   double *diff = malloc(sizeof(double) * sol_size * 2);
 
   for (int i = 0; i < sol_size; i++) {
@@ -130,6 +139,17 @@ void orbit(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
   const DOUBLE q = mu1 + mu2;
   DOUBLE x_delayed = xs_delayed[0];
   DOUBLE y_delayed = xs_delayed[1];
+
+  assert(xs_delayed[0] == xs_delayed[0]);
+  assert(xs_delayed[0] == xs_delayed[2]);
+  assert(xs_delayed[1] == xs_delayed[4]);
+
+  if (dxs_delayed != NULL) {
+    assert(dxs_delayed[0] == dxs_delayed[0]);
+    assert(dxs_delayed[0] == dxs_delayed[2]);
+    assert(dxs_delayed[1] == dxs_delayed[4]);
+  }
+
   for (int i = 0; i < DIM; i += 4) {
     DOUBLE x_ = x[i];
     DOUBLE vx = x[i + 1];

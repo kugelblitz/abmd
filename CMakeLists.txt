@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
-project(dde)
+project(abmd)
 
 set(CMAKE_CXX_STANDARD 11)
 
 include_directories(src test .)
 
-set(SOURCE_FILES test/main.c test/plot.c src/abm.c
+set(SOURCE_FILES test/main.c test/plot.c src/abmd.c
         src/queue.c src/api.c src/rk.c src/rk.h)
 add_executable(dde ${SOURCE_FILES})
 

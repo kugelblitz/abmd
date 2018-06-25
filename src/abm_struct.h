@@ -1,9 +1,9 @@
 #ifndef DDE_ABM_STRUCT_H
 #define DDE_ABM_STRUCT_H
 
-#include "abm.h"
+#include "abmd.h"
 
-struct _ABM {
+struct _ABMD {
   RHS f1;
   RHSD f2;
   int dim;
