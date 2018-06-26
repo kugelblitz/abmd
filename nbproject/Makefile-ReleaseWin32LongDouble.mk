@@ -37,7 +37,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/src/abmd.o \
 	${OBJECTDIR}/src/api.o \
-	${OBJECTDIR}/src/queue.o
+	${OBJECTDIR}/src/queue.o \
+	${OBJECTDIR}/src/rk.o
 
 
 # C Compiler Flags
@@ -78,6 +79,11 @@ ${OBJECTDIR}/src/queue.o: src/queue.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
 	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/queue.o src/queue.c
+
+${OBJECTDIR}/src/rk.o: src/rk.c
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/rk.o src/rk.c
 
 # Subprojects
 .build-subprojects:

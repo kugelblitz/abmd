@@ -271,6 +271,8 @@
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="src/rk.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="src/rk.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
@@ -324,6 +326,8 @@
       <item path="src/queue.c" ex="false" tool="0" flavor2="3">
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/rk.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/rk.h" ex="false" tool="3" flavor2="0">
       </item>
