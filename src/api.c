@@ -126,10 +126,13 @@ void abmd_set_delayed_ranges(ABMD *abm, int *ranges, int ranges_len,
 }
 
 void abmd_set_dx_delays(ABMD *abm, int *idxs, int idxs_len) {
+  abm->dx_delays_len = idxs_len;
+  if (idxs_len == 0) {
+    return;
+  }
   int *_idxs = (int *) malloc(idxs_len * sizeof(int));
   memcpy(_idxs, idxs, idxs_len * sizeof(int));
   abm->dx_delays_idxs = _idxs;
-  abm->dx_delays_len = idxs_len;
 }
 
 char *abmd_get_last_error(ABMD *abm) {
