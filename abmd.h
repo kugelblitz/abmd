@@ -26,9 +26,9 @@ typedef void (*RHS)(DOUBLE x[], double t, DOUBLE *out, void *context);
 typedef void (*RHSD)(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
                      double t, DOUBLE *out, void *context);
 
-int run_abm(ABMD *);
 ABMD *abmd_create(RHS f, int dim, double t0, double t1, double h, double *init);
 void abmd_destroy(ABMD *abm);
+int abmd_run(ABMD *);
 void abmd_set_order(ABMD *abm, int order);
 void abmd_set_delays(ABMD *abm, double *delays, int ndelays);
 void abmd_set_delays_poly_degree(ABMD *abm, int deg);

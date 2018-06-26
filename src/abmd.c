@@ -210,7 +210,7 @@ void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
 }
 
 
-int run_abm(ABMD *abm) {
+int abmd_run(ABMD *abm) {
 
   int abm_order = abm->abm_order;
 
