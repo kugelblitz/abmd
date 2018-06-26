@@ -302,6 +302,11 @@ int run_abm(ABMD *abm) {
           .inner_rk_memory=NULL
   };
 
+#ifdef __MINGW32__
+  fenv_t fenv;
+  fegetenv(&fenv);
+#endif
+  
   SETENV;
 
   // Setting initial conditions for RK4 solution
@@ -397,5 +402,10 @@ int run_abm(ABMD *abm) {
   destroy_abm_data(abm_data);
   free(callback_state);
   free(callback_state_l);
+
+  #ifdef RESTORE_FENV
+  fesetenv(&fenv);
+  #endif
+
   return 0;
 }
