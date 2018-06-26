@@ -4,8 +4,8 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <itemPath>abm.h</itemPath>
       <itemPath>src/abm_struct.h</itemPath>
+      <itemPath>abmd.h</itemPath>
       <itemPath>src/queue.h</itemPath>
       <itemPath>src/rk.h</itemPath>
     </logicalFolder>
@@ -56,7 +56,7 @@
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd.${CND_DLIB_EXT}</output>
         </linkerTool>
       </compileType>
-      <item path="abm.h" ex="false" tool="3" flavor2="0">
+      <item path="abmd.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -104,7 +104,7 @@
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-double.${CND_DLIB_EXT}</output>
         </linkerTool>
       </compileType>
-      <item path="abm.h" ex="false" tool="3" flavor2="0">
+      <item path="abmd.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -152,7 +152,7 @@
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-double.${CND_DLIB_EXT}</output>
         </linkerTool>
       </compileType>
-      <item path="abm.h" ex="false" tool="3" flavor2="0">
+      <item path="abmd.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -203,7 +203,7 @@
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-longdouble.${CND_DLIB_EXT}</output>
         </linkerTool>
       </compileType>
-      <item path="abm.h" ex="false" tool="3" flavor2="0">
+      <item path="abmd.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -259,7 +259,7 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
-      <item path="abm.h" ex="false" tool="3" flavor2="0">
+      <item path="abmd.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -313,7 +313,7 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
-      <item path="abm.h" ex="false" tool="3" flavor2="0">
+      <item path="abmd.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
       </item>
