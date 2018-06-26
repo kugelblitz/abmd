@@ -42,6 +42,6 @@ double *abmd_get_final_state(ABMD *abm);
 void abmd_set_delayed_ranges(ABMD *abm, int *ranges, int ranges_len,
                              int delay_idx);
 void abmd_set_dx_delays(ABMD *abm, int *idxs, int idxs_len);
-char *abmd_get_last_error(ABMD *abm);
+const char *abmd_get_last_error(ABMD *abm);
 
 #endif //DDE_ABM_H

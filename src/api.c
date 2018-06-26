@@ -135,6 +135,6 @@ void abmd_set_dx_delays(ABMD *abm, int *idxs, int idxs_len) {
   abm->dx_delays_idxs = _idxs;
 }
 
-char *abmd_get_last_error(ABMD *abm) {
+const char *abmd_get_last_error(ABMD *abm) {
   return abm->error;
 }
