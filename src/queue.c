@@ -194,8 +194,8 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
   }
 
   DOUBLE denom = 0;
-  DOUBLE coefs[20]; // should be enough given that the order does not exceed 19
-  DOUBLE *xs[20];
+  DOUBLE coefs[ABMD_MAX_ORDER + 1];
+  DOUBLE *xs[ABMD_MAX_ORDER + 1];
   
   SETENV;
   for (int i = 0; i < n_points; i++) {

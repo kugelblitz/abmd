@@ -7,7 +7,7 @@
 #include "rk.h"
 #include "queue.h"
 
-static DOUBLE PREDICTOR_COEFFS[19] = {
+static DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
   1.0L,
   1.0 / 2.0L,
   5.0 / 12.0L,

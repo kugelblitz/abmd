@@ -1,6 +1,8 @@
 #ifndef __ABMD_H__
 #define __ABMD_H__
 
+#define ABMD_MAX_ORDER 19
+
 #ifdef __MINGW32__
 #include <fenv.h>
 #define SETENV fesetenv(FE_PC64_ENV)

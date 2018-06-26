@@ -4,7 +4,7 @@
 #include "abmd.h"
 #include "abm_struct.h"
 
-#define ABM_ORDER 11
+#define ABMD_DEFAULT_ORDER 11
 
 ABMD *abmd_create(RHS f, int dim, double t0, double t1, double h, double *init) {
   ABMD *abm = (ABMD *) malloc(sizeof(ABMD));
@@ -20,9 +20,9 @@ ABMD *abmd_create(RHS f, int dim, double t0, double t1, double h, double *init) 
           .init=init,
           .delays=NULL,
           .ndelays=0,
-          .abm_order=ABM_ORDER,
-          .delays_poly_degree=ABM_ORDER,
-          .pointsave_poly_degree=ABM_ORDER,
+          .abm_order=ABMD_DEFAULT_ORDER,
+          .delays_poly_degree=ABMD_DEFAULT_ORDER,
+          .pointsave_poly_degree=ABMD_DEFAULT_ORDER,
           .final_state=final_state,
           .context=NULL,
           .init_call=NULL,
