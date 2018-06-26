@@ -35,7 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/src/abm.o \
+	${OBJECTDIR}/src/abmd.o \
 	${OBJECTDIR}/src/api.o \
 	${OBJECTDIR}/src/queue.o \
 	${OBJECTDIR}/src/rk.o
@@ -59,16 +59,16 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde.${CND_DLIB_EXT}
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd.${CND_DLIB_EXT}
 
-${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde.${CND_DLIB_EXT}: ${OBJECTFILES}
+${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd.${CND_DLIB_EXT}: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
-	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde.${CND_DLIB_EXT} ${OBJECTFILES} ${LDLIBSOPTIONS} -shared -fPIC
+	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd.${CND_DLIB_EXT} ${OBJECTFILES} ${LDLIBSOPTIONS} -shared -fPIC
 
-${OBJECTDIR}/src/abm.o: src/abm.c
+${OBJECTDIR}/src/abmd.o: src/abmd.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -g -Wall -DUSE_LONG_DOUBLE -I. -Isrc -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abm.o src/abm.c
+	$(COMPILE.c) -g -Wall -DUSE_LONG_DOUBLE -I. -Isrc -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abmd.o src/abmd.c
 
 ${OBJECTDIR}/src/api.o: src/api.c
 	${MKDIR} -p ${OBJECTDIR}/src

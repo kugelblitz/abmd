@@ -16,7 +16,7 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <itemPath>src/abm.c</itemPath>
+      <itemPath>src/abmd.c</itemPath>
       <itemPath>src/api.c</itemPath>
       <itemPath>src/queue.c</itemPath>
       <itemPath>src/rk.c</itemPath>
@@ -52,12 +52,15 @@
           </preprocessorList>
           <warningLevel>2</warningLevel>
         </cTool>
+        <linkerTool>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd.${CND_DLIB_EXT}</output>
+        </linkerTool>
       </compileType>
       <item path="abm.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="src/abm.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abmd.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -97,12 +100,15 @@
         <asmTool>
           <developmentMode>5</developmentMode>
         </asmTool>
+        <linkerTool>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-double.${CND_DLIB_EXT}</output>
+        </linkerTool>
       </compileType>
       <item path="abm.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="src/abm.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abmd.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -143,14 +149,14 @@
           <developmentMode>5</developmentMode>
         </asmTool>
         <linkerTool>
-          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde-double.${CND_DLIB_EXT}</output>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-double.${CND_DLIB_EXT}</output>
         </linkerTool>
       </compileType>
       <item path="abm.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="src/abm.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abmd.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -194,14 +200,14 @@
           <developmentMode>5</developmentMode>
         </asmTool>
         <linkerTool>
-          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libdde-longdouble.${CND_DLIB_EXT}</output>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-longdouble.${CND_DLIB_EXT}</output>
         </linkerTool>
       </compileType>
       <item path="abm.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="src/abm.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abmd.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -246,7 +252,7 @@
           <developmentMode>5</developmentMode>
         </asmTool>
         <linkerTool>
-          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/dde-longdouble.dll</output>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll</output>
           <commandlineTool>i686-w64-mingw32-gcc</commandlineTool>
           <linkerLibItems>
             <linkerOptionItem>-static-libgcc</linkerOptionItem>
@@ -255,9 +261,9 @@
       </compileType>
       <item path="abm.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="src/abm.c" ex="false" tool="0" flavor2="3">
-      </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abmd.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="3">
       </item>
@@ -300,7 +306,7 @@
           <developmentMode>5</developmentMode>
         </asmTool>
         <linkerTool>
-          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/dde-longdouble.dll</output>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll</output>
           <commandlineTool>x86_64-w64-mingw32-gcc</commandlineTool>
           <linkerLibItems>
             <linkerOptionItem>-static-libgcc</linkerOptionItem>
@@ -309,9 +315,9 @@
       </compileType>
       <item path="abm.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="src/abm.c" ex="false" tool="0" flavor2="3">
-      </item>
       <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abmd.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/api.c" ex="false" tool="0" flavor2="3">
       </item>

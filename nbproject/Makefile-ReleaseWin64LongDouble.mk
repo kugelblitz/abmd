@@ -35,7 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/src/abm.o \
+	${OBJECTDIR}/src/abmd.o \
 	${OBJECTDIR}/src/api.o \
 	${OBJECTDIR}/src/queue.o
 
@@ -58,16 +58,16 @@ LDLIBSOPTIONS=-static-libgcc
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/dde-longdouble.dll
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll
 
-${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/dde-longdouble.dll: ${OBJECTFILES}
+${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
-	x86_64-w64-mingw32-gcc -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/dde-longdouble.dll ${OBJECTFILES} ${LDLIBSOPTIONS} -shared -fPIC
+	x86_64-w64-mingw32-gcc -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll ${OBJECTFILES} ${LDLIBSOPTIONS} -shared -fPIC
 
-${OBJECTDIR}/src/abm.o: src/abm.c
+${OBJECTDIR}/src/abmd.o: src/abmd.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abm.o src/abm.c
+	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abmd.o src/abmd.c
 
 ${OBJECTDIR}/src/api.o: src/api.c
 	${MKDIR} -p ${OBJECTDIR}/src
