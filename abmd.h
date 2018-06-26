@@ -1,5 +1,5 @@
-#ifndef DDE_ABM_H
-#define DDE_ABM_H
+#ifndef __ABMD_H__
+#define __ABMD_H__
 
 #ifdef __MINGW32__
 #include <fenv.h>
@@ -44,4 +44,4 @@ void abmd_set_delayed_ranges(ABMD *abm, int *ranges, int ranges_len,
 void abmd_set_dx_delays(ABMD *abm, int *idxs, int idxs_len);
 const char *abmd_get_last_error(ABMD *abm);
 
-#endif //DDE_ABM_H
+#endif
