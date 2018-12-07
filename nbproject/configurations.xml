@@ -55,9 +55,6 @@
         </cTool>
         <linkerTool>
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd.${CND_DLIB_EXT}</output>
-          <linkerDynSerch>
-            <pElem>.</pElem>
-          </linkerDynSerch>
         </linkerTool>
       </compileType>
       <item path="abmd.h" ex="false" tool="3" flavor2="0">
@@ -107,9 +104,6 @@
         </asmTool>
         <linkerTool>
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-double.${CND_DLIB_EXT}</output>
-          <linkerDynSerch>
-            <pElem>.</pElem>
-          </linkerDynSerch>
         </linkerTool>
       </compileType>
       <item path="abmd.h" ex="false" tool="3" flavor2="0">
@@ -159,9 +153,6 @@
         </asmTool>
         <linkerTool>
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-double.${CND_DLIB_EXT}</output>
-          <linkerDynSerch>
-            <pElem>.</pElem>
-          </linkerDynSerch>
         </linkerTool>
       </compileType>
       <item path="abmd.h" ex="false" tool="3" flavor2="0">
@@ -214,9 +205,6 @@
         </asmTool>
         <linkerTool>
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-longdouble.${CND_DLIB_EXT}</output>
-          <linkerDynSerch>
-            <pElem>.</pElem>
-          </linkerDynSerch>
         </linkerTool>
       </compileType>
       <item path="abmd.h" ex="false" tool="3" flavor2="0">
@@ -270,9 +258,6 @@
         </asmTool>
         <linkerTool>
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll</output>
-          <linkerDynSerch>
-            <pElem>.</pElem>
-          </linkerDynSerch>
           <commandlineTool>i686-w64-mingw32-gcc</commandlineTool>
           <linkerLibItems>
             <linkerOptionItem>-static-libgcc</linkerOptionItem>
@@ -330,9 +315,6 @@
         </asmTool>
         <linkerTool>
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll</output>
-          <linkerDynSerch>
-            <pElem>.</pElem>
-          </linkerDynSerch>
           <commandlineTool>x86_64-w64-mingw32-gcc</commandlineTool>
           <linkerLibItems>
             <linkerOptionItem>-static-libgcc</linkerOptionItem>
