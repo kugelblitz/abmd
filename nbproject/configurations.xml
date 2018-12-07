@@ -35,9 +35,10 @@
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="Debug" type="2">
+    <conf name="Debug" type="2" platformSpecific="true">
       <toolsSet>
         <compilerSet>default</compilerSet>
+        <platform>2</platform>
         <dependencyChecking>true</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
@@ -73,9 +74,10 @@
       <item path="src/rk.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
-    <conf name="Release32" type="2">
+    <conf name="Release32" type="2" platformSpecific="true">
       <toolsSet>
         <compilerSet>default</compilerSet>
+        <platform>2</platform>
         <dependencyChecking>true</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
@@ -121,9 +123,10 @@
       <item path="src/rk.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
-    <conf name="Release64" type="2">
+    <conf name="Release64" type="2" platformSpecific="true">
       <toolsSet>
         <compilerSet>default</compilerSet>
+        <platform>2</platform>
         <dependencyChecking>true</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
@@ -169,9 +172,10 @@
       <item path="src/rk.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
-    <conf name="Release64LongDouble" type="2">
+    <conf name="Release64LongDouble" type="2" platformSpecific="true">
       <toolsSet>
         <compilerSet>default</compilerSet>
+        <platform>2</platform>
         <dependencyChecking>true</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
@@ -220,9 +224,10 @@
       <item path="src/rk.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
-    <conf name="ReleaseWin32LongDouble" type="2">
+    <conf name="ReleaseWin32LongDouble" type="2" platformSpecific="true">
       <toolsSet>
         <compilerSet>default</compilerSet>
+        <platform>2</platform>
         <dependencyChecking>true</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
@@ -276,9 +281,10 @@
       <item path="src/rk.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
-    <conf name="ReleaseWin64LongDouble" type="2">
+    <conf name="ReleaseWin64LongDouble" type="2" platformSpecific="true">
       <toolsSet>
         <compilerSet>default</compilerSet>
+        <platform>2</platform>
         <dependencyChecking>true</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
@@ -324,6 +330,57 @@
       <item path="src/api.c" ex="false" tool="0" flavor2="3">
       </item>
       <item path="src/queue.c" ex="false" tool="0" flavor2="3">
+      </item>
+      <item path="src/queue.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/rk.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/rk.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+    <conf name="Release64LongDoubleOSX" type="2">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>6</developmentMode>
+          <stripSymbols>true</stripSymbols>
+          <architecture>2</architecture>
+          <standard>3</standard>
+          <incDir>
+            <pElem>.</pElem>
+            <pElem>src</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>USE_LONG_DOUBLE</Elem>
+          </preprocessorList>
+          <warningLevel>2</warningLevel>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+        <linkerTool>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libabmd-longdouble.${CND_DLIB_EXT}</output>
+        </linkerTool>
+      </compileType>
+      <item path="abmd.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abm_struct.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/abmd.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/api.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/queue.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/queue.h" ex="false" tool="3" flavor2="0">
       </item>

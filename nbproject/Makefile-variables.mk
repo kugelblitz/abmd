@@ -54,6 +54,14 @@ CND_ARTIFACT_PATH_ReleaseWin64LongDouble=dist/ReleaseWin64LongDouble/GNU-Linux/a
 CND_PACKAGE_DIR_ReleaseWin64LongDouble=dist/ReleaseWin64LongDouble/GNU-Linux/package
 CND_PACKAGE_NAME_ReleaseWin64LongDouble=libabmd.so.tar
 CND_PACKAGE_PATH_ReleaseWin64LongDouble=dist/ReleaseWin64LongDouble/GNU-Linux/package/libabmd.so.tar
+# Release64LongDoubleOSX configuration
+CND_PLATFORM_Release64LongDoubleOSX=GNU-Linux
+CND_ARTIFACT_DIR_Release64LongDoubleOSX=dist/Release64LongDoubleOSX/GNU-Linux
+CND_ARTIFACT_NAME_Release64LongDoubleOSX=libabmd-longdouble.so
+CND_ARTIFACT_PATH_Release64LongDoubleOSX=dist/Release64LongDoubleOSX/GNU-Linux/libabmd-longdouble.so
+CND_PACKAGE_DIR_Release64LongDoubleOSX=dist/Release64LongDoubleOSX/GNU-Linux/package
+CND_PACKAGE_NAME_Release64LongDoubleOSX=libabmd.so.tar
+CND_PACKAGE_PATH_Release64LongDoubleOSX=dist/Release64LongDoubleOSX/GNU-Linux/package/libabmd.so.tar
 #
 # include compiler specific variables
 #

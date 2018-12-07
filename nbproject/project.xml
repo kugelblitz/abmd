@@ -35,6 +35,10 @@
                     <name>ReleaseWin64LongDouble</name>
                     <type>2</type>
                 </confElem>
+                <confElem>
+                    <name>Release64LongDoubleOSX</name>
+                    <type>2</type>
+                </confElem>
             </confList>
             <formatting>
                 <project-formatting-style>false</project-formatting-style>
