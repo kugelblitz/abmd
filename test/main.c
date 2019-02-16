@@ -82,7 +82,7 @@ void calc_difference(RHSD f) {
   abmd_set_delayed_ranges(abm, (int[]) {0, 4}, 2, 1);
   abmd_set_dx_delays(abm, (int[]) {0, 1}, 2);
 
-  run_abm(abm);
+  abmd_run(abm);
   printf("Final: %e %e\n", abmd_get_final_state(abm)[0], abmd_get_final_state(abm)[2]);
   abmd_destroy(abm);
   printf("-----------------------------------------------------------\n");
@@ -108,7 +108,7 @@ void calc_difference(RHSD f) {
   abmd_set_delayed_ranges(abm, (int[]) {0, 4}, 2, 1);
   abmd_set_dx_delays(abm, (int[]) {0, 1}, 2);
 
-  run_abm(abm);
+  abmd_run(abm);
   abmd_destroy(abm);
   double *diff = malloc(sizeof(double) * sol_size * 2);
 
