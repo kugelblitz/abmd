@@ -219,9 +219,10 @@ int abmd_run(ABMD *abm) {
     return 1;
   }
 
+  int ndelays = abm->ndelays;
   int delays_degree = abm->delays_poly_degree;
   int pointsave_degree = abm->pointsave_poly_degree;
-  if (!(1 <= delays_degree && delays_degree <= abm_order) ||
+  if ((ndelays > 0 && !(1 <= delays_degree && delays_degree <= abm_order)) ||
       !(1 <= pointsave_degree && pointsave_degree <= abm_order)) {
     abm->error = "Interpolation degrees must be not less than 1 and"
                  "not greater than ABM order";
@@ -236,7 +237,6 @@ int abmd_run(ABMD *abm) {
   int dim = abm->dim;
   double t0 = abm->t0;
   double t1 = abm->t1;
-  int ndelays = abm->ndelays;
 
   int hsgn = (t1 > t0) - (t1 < t0);
   abm->h *= hsgn;
