@@ -295,18 +295,18 @@ int abmd_run(ABMD *abm) {
   set_t0(queue, t0);
   set_step(queue, h);
 
-  ABMData abm_data = (ABMData){
-          .input=*abm,
-          .rk4_h=rk4_h,
-          .temp=rhs_temp,
-          .queue=queue,
-          .xs_delayed=xs_delayed,
-          .xs_delayed_inner=xs_delayed_inner,
-          .xs_delayed_tmp=xs_delayed_tmp,
-          .dxs_delayed=dxs_delayed,
-          .rk_memory=NULL,
-          .inner_rk_memory=NULL
-  };
+  ABMData abm_data;
+  
+  abm_data.input = *abm;
+  abm_data.rk4_h = rk4_h;
+  abm_data.temp = rhs_temp;
+  abm_data.queue = queue;
+  abm_data.xs_delayed = xs_delayed;
+  abm_data.xs_delayed_inner = xs_delayed_inner;
+  abm_data.xs_delayed_tmp = xs_delayed_tmp;
+  abm_data.dxs_delayed = dxs_delayed;
+  abm_data.rk_memory = NULL;
+  abm_data.inner_rk_memory = NULL;
 
 #ifdef __MINGW32__
   fenv_t fenv;
