@@ -1,28 +1,26 @@
 #include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
 #include <string.h>
 #include <math.h>
 
 #include "queue.h"
-
+#include "abmd_internal.h"
 
 struct _Queue {
   double t0, h;
   int head, tail, size, dim;
   int capacity, block_size;
-  DOUBLE* _array;
-  DOUBLE **xarray, **dxarray;
-  DOUBLE *x_backup;
-  DOUBLE* diffs_r;
-  DOUBLE* diffs_w;
-  DOUBLE* last_diff;
+  ABMD_DOUBLE* _array;
+  ABMD_DOUBLE **xarray, **dxarray;
+  ABMD_DOUBLE *x_backup;
+  ABMD_DOUBLE* diffs_r;
+  ABMD_DOUBLE* diffs_w;
+  ABMD_DOUBLE* last_diff;
   int delays_poly_degree;
   int pointsave_poly_degree;
   double *lgr_delay_ws;
   double *lgr_delay_ws_nolast;
   double *lgr_pointsave_ws;
-  DOUBLE *lgr_nom;
+  ABMD_DOUBLE *lgr_nom;
 };
 
 Queue *create_queue(int capacity, int dim) {
@@ -35,25 +33,25 @@ Queue *create_queue(int capacity, int dim) {
   queue->dim = dim;
   queue->head = queue->size = 0;
   queue->tail = capacity - 1;
-  queue->_array = (DOUBLE *) malloc(capacity * block_size * sizeof(DOUBLE));
-  queue->xarray = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
-  queue->dxarray = (DOUBLE **) malloc(capacity * sizeof(DOUBLE *));
-  queue->x_backup = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
+  queue->_array = (ABMD_DOUBLE *) malloc(capacity * block_size * sizeof(ABMD_DOUBLE));
+  queue->xarray = (ABMD_DOUBLE **) malloc(capacity * sizeof(ABMD_DOUBLE *));
+  queue->dxarray = (ABMD_DOUBLE **) malloc(capacity * sizeof(ABMD_DOUBLE *));
+  queue->x_backup = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
 
   for (int i = 0; i < capacity; i++) {
     queue->xarray[i] = &queue->_array[i * block_size];
     queue->dxarray[i] = &queue->_array[i * block_size + dim];
   }
 
-  queue->diffs_r = (DOUBLE *) malloc((capacity - 1) * dim * sizeof(DOUBLE));
-  queue->diffs_w = (DOUBLE *) malloc((capacity - 1) * dim * sizeof(DOUBLE));
-  queue->last_diff = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
+  queue->diffs_r = (ABMD_DOUBLE *) malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
+  queue->diffs_w = (ABMD_DOUBLE *) malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
+  queue->last_diff = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
   queue->delays_poly_degree = capacity - 1;
   queue->pointsave_poly_degree = capacity - 1;
   queue->lgr_delay_ws = (double *) malloc(capacity * sizeof(double));
   queue->lgr_delay_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
   queue->lgr_pointsave_ws = (double *) malloc(capacity * sizeof(double));
-  queue->lgr_nom = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
+  queue->lgr_nom = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
   SETENV;
   return queue;
 }
@@ -150,11 +148,11 @@ double _get_t_index(Queue *q, double t, int last_known) {
   return -1;
 }
 
-DOUBLE* get_x(Queue *q, int block_idx) {
+ABMD_DOUBLE* get_x(Queue *q, int block_idx) {
   return q->xarray[(q->head + block_idx) % q->capacity];
 }
 
-DOUBLE* get_dx(Queue *q, int block_idx) {
+ABMD_DOUBLE* get_dx(Queue *q, int block_idx) {
   return q->dxarray[(q->head + block_idx) % q->capacity];
 }
 
@@ -168,14 +166,14 @@ void restore_last_x(Queue *q) {
 }
 
 void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
-               double *ws, int last_known, DOUBLE *(*get)(Queue *, int),
-               DOUBLE *out) {
+               double *ws, int last_known, ABMD_DOUBLE *(*get)(Queue *, int),
+               ABMD_DOUBLE *out) {
 
   double t_idx = _get_t_index(q, t, last_known);
   if (t_idx != -1 && fmod(t_idx, 1) < 1e-13) {
-    DOUBLE *x = get(q, (int) round(t_idx));
+    ABMD_DOUBLE *x = get(q, (int) round(t_idx));
     if (idxs == NULL) {
-      memcpy(out, x, idxs_len * sizeof(DOUBLE));
+      memcpy(out, x, idxs_len * sizeof(ABMD_DOUBLE));
       SETENV;
       return;
     }
@@ -193,9 +191,9 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
     left = (int) t_idx;
   }
 
-  DOUBLE denom = 0;
-  DOUBLE coefs[ABMD_MAX_ORDER + 1];
-  DOUBLE *xs[ABMD_MAX_ORDER + 1];
+  ABMD_DOUBLE denom = 0;
+  ABMD_DOUBLE coefs[ABMD_MAX_ORDER + 1];
+  ABMD_DOUBLE *xs[ABMD_MAX_ORDER + 1];
   
   SETENV;
   for (int i = 0; i < n_points; i++) {
@@ -211,7 +209,7 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
 
   if (idxs == NULL) {
     for (int j = 0; j < idxs_len; j++) {
-      DOUBLE res = 0;
+      ABMD_DOUBLE res = 0;
       for (int i = 0; i < n_points; i++) {
         res += coefs[i] * xs[i][j];
       }
@@ -219,7 +217,7 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
     }
   } else {
     for (int j = 0; j < idxs_len; j++) {
-      DOUBLE res = 0;
+      ABMD_DOUBLE res = 0;
       for (int i = 0; i < n_points; i++) {
         res += coefs[i] * xs[i][idxs[j]];
       }
@@ -228,18 +226,18 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
   }
 }
 
-void evaluate_x_all(Queue *q, double t, DOUBLE *out) {
+void evaluate_x_all(Queue *q, double t, ABMD_DOUBLE *out) {
   _evaluate(q, t, NULL, q->dim, q->pointsave_poly_degree + 1,
             q->lgr_pointsave_ws, 1, get_x, out);
 }
 
-void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, DOUBLE *out) {
+void evaluate_x_idxs(Queue *q, double t, int *idxs, int idxs_len, ABMD_DOUBLE *out) {
   _evaluate(q, t, idxs, idxs_len, q->delays_poly_degree + 1,
             q->lgr_delay_ws, 1, get_x, out);
 }
 
 void evaluate_dx(Queue *q, double t, int *idxs, int idxs_len,
-                 int last_known, DOUBLE *out) {
+                 int last_known, ABMD_DOUBLE *out) {
   int deg = q->delays_poly_degree;
   double *ws = q->lgr_delay_ws;
   int n_points = deg + 1;
@@ -250,7 +248,7 @@ void evaluate_dx(Queue *q, double t, int *idxs, int idxs_len,
   _evaluate(q, t, idxs, idxs_len, n_points, ws, last_known, get_dx, out);
 }
 
-DOUBLE* push(Queue *q) {
+ABMD_DOUBLE* push(Queue *q) {
   if (is_full(q))
     return NULL;
   q->tail = (q->tail + 1) % q->capacity;
@@ -258,48 +256,48 @@ DOUBLE* push(Queue *q) {
   return q->xarray[q->tail];
 }
 
-DOUBLE* pop(Queue *q) {
+ABMD_DOUBLE* pop(Queue *q) {
   if (is_empty(q))
     return NULL;
-  DOUBLE *address = q->xarray[q->head];
+  ABMD_DOUBLE *address = q->xarray[q->head];
   q->head = (q->head + 1) % q->capacity;
   q->size -= 1;
   q->t0 += q->h;
   return address;
 }
 
-DOUBLE* peek_left(Queue* q) {
+ABMD_DOUBLE* peek_left(Queue* q) {
   if (is_empty(q))
     return NULL;
   return q->xarray[q->head];
 }
 
-DOUBLE* peek_right_x(Queue* q) {
+ABMD_DOUBLE* peek_right_x(Queue* q) {
   if (is_empty(q))
     return NULL;
   return q->xarray[q->tail];
 }
 
-DOUBLE* peek_right_dx(Queue* q) {
+ABMD_DOUBLE* peek_right_dx(Queue* q) {
   if (is_empty(q))
     return NULL;
   return q->dxarray[q->tail];
 }
 
-DOUBLE* get_diffs_r(Queue *q) {
+ABMD_DOUBLE* get_diffs_r(Queue *q) {
   return q->diffs_r;
 }
 
-DOUBLE* get_diffs_w(Queue *q) {
+ABMD_DOUBLE* get_diffs_w(Queue *q) {
   return q->diffs_w;
 }
 
-DOUBLE* get_last_diff(Queue *q) {
+ABMD_DOUBLE* get_last_diff(Queue *q) {
   return q->last_diff;
 }
 
 void swap_diffs(Queue *q) {
-  DOUBLE *diffs_r = q->diffs_r;
+  ABMD_DOUBLE *diffs_r = q->diffs_r;
   q->diffs_r = q->diffs_w;
   q->diffs_w = diffs_r;
 }
@@ -309,13 +307,13 @@ void update_diffs(Queue *q) {
   int diffs_len = q->capacity - 1;
   int dim = q->dim;
 
-  DOUBLE *right = peek_right_dx(q);
-  DOUBLE *diffs_r = q->diffs_r;
-  DOUBLE *diffs_w = q->diffs_w;
+  ABMD_DOUBLE *right = peek_right_dx(q);
+  ABMD_DOUBLE *diffs_r = q->diffs_r;
+  ABMD_DOUBLE *diffs_w = q->diffs_w;
 
   if (!is_full(q)) {
     for (int i = 0; i < dim; i++) {
-      DOUBLE new = *right++;
+      ABMD_DOUBLE new = *right++;
       for (int j = 0; j < size - 1; j++) {
         *diffs_w++ = new;
         new -= *diffs_r++;
@@ -327,10 +325,10 @@ void update_diffs(Queue *q) {
     return;
   }
 
-  DOUBLE *last_diff = q->last_diff;
+  ABMD_DOUBLE *last_diff = q->last_diff;
 
   for (int i = 0; i < dim; i++) {
-    DOUBLE new = *right++;
+    ABMD_DOUBLE new = *right++;
     for (int j = 0; j < size - 1; j++) {
       *diffs_w++ = new;
       new -= *diffs_r++;
@@ -340,9 +338,14 @@ void update_diffs(Queue *q) {
 }
 
 
+/*
+
+#include <assert.h>
+#include <stdio.h>
+
 int test() {
   Queue* queue = create_queue(4, 2);
-  DOUBLE *address;
+  ABMD_DOUBLE *address;
   address = push(queue);
   address[0] = 10;
   address[1] = 15;
@@ -385,9 +388,9 @@ int main_() {
   Queue *q = create_queue(qsize, dim * 2);
   set_step(q, -1);
   set_t0(q, 0);
-  DOUBLE *one = push(q);
-  DOUBLE *two = push(q);
-  DOUBLE *three = push(q);
+  ABMD_DOUBLE *one = push(q);
+  ABMD_DOUBLE *two = push(q);
+  ABMD_DOUBLE *three = push(q);
   one[0] = 0;
   one[1] = 16;
   two[0] = 1;
@@ -395,12 +398,12 @@ int main_() {
   three[0] = 4;
   three[1] = 4;
 
-  DOUBLE *out = (DOUBLE *) malloc(dim * sizeof(DOUBLE));
+  ABMD_DOUBLE *out = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
   evaluate_x_all(q, -1.5, out);
   printf("%Le, %Le\n", out[0], out[1]);
 
   pop(q);
-  DOUBLE *next = push(q);
+  ABMD_DOUBLE *next = push(q);
   next[0] = 9;
   next[1] = 1;
   evaluate_x_all(q, -4, out);
@@ -408,3 +411,4 @@ int main_() {
   
   return 0;
 }
+*/

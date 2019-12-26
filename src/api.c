@@ -2,11 +2,9 @@
 #include <string.h>
 
 #include "abmd.h"
-#include "abm_struct.h"
+#include "abmd_internal.h"
 
-#define ABMD_DEFAULT_ORDER 11
-
-ABMD *abmd_create(RHS f, int dim, double t0, double t1, double h, double *init) {
+ABMD *abmd_create(ABMD_RHS f, int dim, double t0, double t1, double h, double *init) {
   ABMD *abm = (ABMD *) malloc(sizeof(ABMD));
   double *final_state = (double *) malloc(sizeof(double) * dim);
   char *error = (char *) malloc(256 * sizeof(char));
@@ -84,7 +82,7 @@ void abmd_set_pointsave_poly_degree(ABMD *abm, int deg) {
   abm->pointsave_poly_degree = deg;
 }
 
-void abmd_set_f2(ABMD *abm, RHSD f2) {
+void abmd_set_f2(ABMD *abm, ABMD_RHSD f2) {
   abm->f2 = f2;
 }
 
@@ -92,7 +90,7 @@ void abmd_set_context(ABMD *abm, void *context) {
   abm->context = context;
 }
 
-void abmd_set_init_call(ABMD *abm, void (*init_call)(DOUBLE[], void *)) {
+void abmd_set_init_call(ABMD *abm, void (*init_call)(ABMD_DOUBLE[], void *)) {
   abm->init_call = init_call;
 }
 

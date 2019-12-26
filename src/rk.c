@@ -3,6 +3,7 @@
 
 #include "abmd.h"
 #include "rk.h"
+#include "abmd_internal.h"
 
 double c2  = 0.526001519587677318785587544488E-01,
        c3  = 0.789002279381515978178381316732E-01,
@@ -15,7 +16,7 @@ double c2  = 0.526001519587677318785587544488E-01,
        c10 = 0.6E+00,
        c11 = 0.857142857142857142857142857142E+00;
 
-DOUBLE b1 =   5.42937341165687622380535766363E-2L,
+ABMD_DOUBLE b1 =   5.42937341165687622380535766363E-2L,
        b6 =   4.45031289275240888144113950566E0L,
        b7 =   1.89151789931450038304281599044E0L,
        b8 =  -5.8012039600105847814672114227E0L,
@@ -81,27 +82,27 @@ DOUBLE b1 =   5.42937341165687622380535766363E-2L,
 
 
 
-void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
-              DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
+void rk4_step(ABMD_RHS f, double h, double t, ABMD_DOUBLE *x, int dim, void *context,
+              ABMD_DOUBLE *out, ABMD_DOUBLE *rhs_out, ABMD_DOUBLE **memory) {
 
   if (*memory == NULL) {
-    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (5 * dim));
+    *memory = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * (5 * dim));
   }
-  DOUBLE *data = *memory;
+  ABMD_DOUBLE *data = *memory;
 
-  DOUBLE *k1 = data;
-  DOUBLE *k2 = &data[dim];
-  DOUBLE *k3 = &data[dim * 2];
-  DOUBLE *k4 = &data[dim * 3];
+  ABMD_DOUBLE *k1 = data;
+  ABMD_DOUBLE *k2 = &data[dim];
+  ABMD_DOUBLE *k3 = &data[dim * 2];
+  ABMD_DOUBLE *k4 = &data[dim * 3];
 
-  DOUBLE *input = &data[dim * 4];
+  ABMD_DOUBLE *input = &data[dim * 4];
 
-  memcpy(input, x, dim * sizeof(DOUBLE));
+  memcpy(input, x, dim * sizeof(ABMD_DOUBLE));
   SETENV;
   f(input, t, k1, context);
 
   if (rhs_out != NULL) {
-    memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
+    memcpy(rhs_out, k1, dim * sizeof(ABMD_DOUBLE));
     SETENV;
   }
 
@@ -126,33 +127,33 @@ void rk4_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
 }
 
 
-void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
-                 DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory) {
+void dopri8_step(ABMD_RHS f, double h, double t, ABMD_DOUBLE *x, int dim, void *context,
+                 ABMD_DOUBLE *out, ABMD_DOUBLE *rhs_out, ABMD_DOUBLE **memory) {
 
   if (*memory == NULL) {
-    *memory = (DOUBLE *) malloc(sizeof(DOUBLE) * (11 * dim));
+    *memory = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * (11 * dim));
   }
-  DOUBLE *data = *memory;
+  ABMD_DOUBLE *data = *memory;
 
-  DOUBLE *k1 = data;
-  DOUBLE *k2 = &data[dim];
-  DOUBLE *k3 = &data[dim * 2];
-  DOUBLE *k4 = &data[dim * 3];
-  DOUBLE *k5 = &data[dim * 4];
-  DOUBLE *k6 = &data[dim * 5];
-  DOUBLE *k7 = &data[dim * 6];
-  DOUBLE *k8 = &data[dim * 7];
-  DOUBLE *k9 = &data[dim * 8];
-  DOUBLE *k10 = &data[dim * 9];
+  ABMD_DOUBLE *k1 = data;
+  ABMD_DOUBLE *k2 = &data[dim];
+  ABMD_DOUBLE *k3 = &data[dim * 2];
+  ABMD_DOUBLE *k4 = &data[dim * 3];
+  ABMD_DOUBLE *k5 = &data[dim * 4];
+  ABMD_DOUBLE *k6 = &data[dim * 5];
+  ABMD_DOUBLE *k7 = &data[dim * 6];
+  ABMD_DOUBLE *k8 = &data[dim * 7];
+  ABMD_DOUBLE *k9 = &data[dim * 8];
+  ABMD_DOUBLE *k10 = &data[dim * 9];
 
-  DOUBLE *input = &data[dim * 10];
+  ABMD_DOUBLE *input = &data[dim * 10];
 
-  memcpy(input, x, dim * sizeof(DOUBLE));
+  memcpy(input, x, dim * sizeof(ABMD_DOUBLE));
   SETENV;
   f(input, t, k1, context);
 
   if (rhs_out != NULL) {
-    memcpy(rhs_out, k1, dim * sizeof(DOUBLE));
+    memcpy(rhs_out, k1, dim * sizeof(ABMD_DOUBLE));
     SETENV;
   }
 
@@ -226,12 +227,12 @@ void dopri8_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
     k5[i] = x[i] + h * k4[i];
   }
 
-  memcpy(out, k5, dim * sizeof(DOUBLE));
+  memcpy(out, k5, dim * sizeof(ABMD_DOUBLE));
   SETENV;
 }
 
-void rk_step(RHS f, double h, double t, DOUBLE *state, int dim, void *context,
-             DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory, int method) {
+void rk_step(ABMD_RHS f, double h, double t, ABMD_DOUBLE *state, int dim, void *context,
+             ABMD_DOUBLE *out, ABMD_DOUBLE *rhs_out, ABMD_DOUBLE **memory, int method) {
   if (method == METHOD_DOPRI8) {
     dopri8_step(f, h, t, state, dim, context, out, rhs_out, memory);
   } else if (method == METHOD_RK4) {

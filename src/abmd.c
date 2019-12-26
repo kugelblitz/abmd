@@ -1,13 +1,12 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "abmd.h"
-#include "abm_struct.h"
 #include "rk.h"
 #include "queue.h"
+#include "abmd_internal.h"
 
-static DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
+static ABMD_DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
   1.0L,
   1.0 / 2.0L,
   5.0 / 12.0L,
@@ -33,14 +32,14 @@ static DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
 typedef struct {
   ABMD input;
   double rk4_h;
-  DOUBLE *temp;
+  ABMD_DOUBLE *temp;
   Queue *queue;
-  DOUBLE *xs_delayed;
-  DOUBLE *xs_delayed_inner;
-  DOUBLE *xs_delayed_tmp;
-  DOUBLE *dxs_delayed;
-  DOUBLE *rk_memory;
-  DOUBLE *inner_rk_memory;
+  ABMD_DOUBLE *xs_delayed;
+  ABMD_DOUBLE *xs_delayed_inner;
+  ABMD_DOUBLE *xs_delayed_tmp;
+  ABMD_DOUBLE *dxs_delayed;
+  ABMD_DOUBLE *rk_memory;
+  ABMD_DOUBLE *inner_rk_memory;
 } ABMData;
 
 static void destroy_abm_data(ABMData abm_data) {
@@ -62,41 +61,41 @@ static void predict(ABMData *abm_data) {
   Queue *queue = abm_data->queue;
 
   pop(queue);
-  DOUBLE *prev = peek_right_x(queue);
-  DOUBLE *out = push(queue);
+  ABMD_DOUBLE *prev = peek_right_x(queue);
+  ABMD_DOUBLE *out = push(queue);
 
-  memset(out, 0, sizeof(DOUBLE) * dim);
+  memset(out, 0, sizeof(ABMD_DOUBLE) * dim);
   SETENV;
 
-  DOUBLE *diffs = get_diffs_r(queue);
+  ABMD_DOUBLE *diffs = get_diffs_r(queue);
   for (int i = 0; i < dim; i++) {
-    DOUBLE *c = PREDICTOR_COEFFS;
+    ABMD_DOUBLE *c = PREDICTOR_COEFFS;
     for (int j = 0; j < abm_order; j++) {
-      DOUBLE ch = *c++ * h;
+      ABMD_DOUBLE ch = *c++ * h;
       out[i] += *diffs++ * ch;
     }
     out[i] += prev[i];
   }
 }
 
-static void correct(ABMData *abm_data, DOUBLE *x_predicted) {
+static void correct(ABMData *abm_data, ABMD_DOUBLE *x_predicted) {
 
   int dim = abm_data->input.dim;
   int abm_order = abm_data->input.abm_order;
   double h = abm_data->input.h;
   Queue *queue = abm_data->queue;
-  DOUBLE *out = peek_right_x(queue);
+  ABMD_DOUBLE *out = peek_right_x(queue);
 
   if (x_predicted == NULL) x_predicted = out;
 
-  DOUBLE *diff = get_last_diff(queue);
-  DOUBLE ch = h * PREDICTOR_COEFFS[abm_order];
+  ABMD_DOUBLE *diff = get_last_diff(queue);
+  ABMD_DOUBLE ch = h * PREDICTOR_COEFFS[abm_order];
   for (int k = 0; k < dim; k++) {
     out[k] = x_predicted[k] + ch * diff[k];
   }
 }
 
-static void copy_delayed_states(DOUBLE x[], DOUBLE xs_delayed[], int ndelays,
+static void copy_delayed_states(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], int ndelays,
                          int **idxs, int *idxs_lens) {
   for (int i = 0; i < ndelays; i++) {
     for (int j = 0; j < idxs_lens[i]; j++) {
@@ -106,13 +105,13 @@ static void copy_delayed_states(DOUBLE x[], DOUBLE xs_delayed[], int ndelays,
   }
 }
 
-static void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
-         double t, DOUBLE *out, void *abm_data) {
+static void rhs(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], ABMD_DOUBLE dxs_delayed[],
+         double t, ABMD_DOUBLE *out, void *abm_data) {
   ABMData *data = (ABMData *)abm_data;
   int dim = data->input.dim;
-  DOUBLE *temp = data->temp;
+  ABMD_DOUBLE *temp = data->temp;
 
-  memset(out, 0, sizeof(DOUBLE) * dim);
+  memset(out, 0, sizeof(ABMD_DOUBLE) * dim);
 
   if (data->input.f1 == NULL) {
     data->input.f2(x, xs_delayed, dxs_delayed, t, out, data->input.context);
@@ -124,8 +123,8 @@ static void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
 
   if (data->input.f2 == NULL) return;
 
-  DOUBLE *out2 = &temp[0];
-  memset(out2, 0, sizeof(DOUBLE) * dim);
+  ABMD_DOUBLE *out2 = &temp[0];
+  memset(out2, 0, sizeof(ABMD_DOUBLE) * dim);
   data->input.f2(x, xs_delayed, dxs_delayed, t, out2, data->input.context);
 
   SETENV;
@@ -135,17 +134,17 @@ static void rhs(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
   }
 }
 
-static void rhs_rk_inner(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
+static void rhs_rk_inner(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *out, void *abm_data) {
   ABMData *data = (ABMData *) abm_data;
   int ndelays = data->input.ndelays;
   int **idxs = data->input.delayed_idxs;
   int *idxs_lens = data->input.delayed_idxs_lens;
-  DOUBLE *xs_delayed = data->xs_delayed_inner;
+  ABMD_DOUBLE *xs_delayed = data->xs_delayed_inner;
   copy_delayed_states(x, xs_delayed, ndelays, idxs, idxs_lens);
   rhs(x, xs_delayed, NULL, t, out, data);
 }
 
-static void rhs_rk4(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
+static void rhs_rk4(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *out, void *abm_data) {
 
   ABMData *data = (ABMData *) abm_data;
   int dim = data->input.dim;
@@ -153,8 +152,8 @@ static void rhs_rk4(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
   int **idxs = data->input.delayed_idxs;
   int *idxs_lens = data->input.delayed_idxs_lens;
 
-  DOUBLE *xs_delayed = data->xs_delayed;
-  DOUBLE *xs_delayed_tmp = data->xs_delayed_tmp;
+  ABMD_DOUBLE *xs_delayed = data->xs_delayed;
+  ABMD_DOUBLE *xs_delayed_tmp = data->xs_delayed_tmp;
 
 
   for (int i = 0; i < ndelays; i++) {
@@ -176,7 +175,7 @@ static void rhs_rk4(DOUBLE x[], double t, DOUBLE *out, void *abm_data) {
 }
 
 static void get_delayed_states(ABMData *abm_data, double ti, int last_dx_known,
-                        DOUBLE *x_out, DOUBLE *dx_out) {
+                        ABMD_DOUBLE *x_out, ABMD_DOUBLE *dx_out) {
 
   Queue *q = abm_data->queue;
   int ndelays = abm_data->input.ndelays;
@@ -248,7 +247,7 @@ int abmd_run(ABMD *abm) {
   abm->h *= hsgn;
   double h = abm->h;
 
-  DOUBLE *init = (DOUBLE *) malloc(sizeof(DOUBLE) * dim);
+  ABMD_DOUBLE *init = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * dim);
   for (int i = 0; i < dim; i++) {
     init[i] = abm->init[i];
   }
@@ -267,10 +266,10 @@ int abmd_run(ABMD *abm) {
   double rk4_t1 = t0 + rk4_i1 * h;
 
   int rk_size = rk4_n + 1;  // One more block to store the initial condition
-  DOUBLE *rk4_sol = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
-  DOUBLE *rk4_rhss = (DOUBLE *) malloc(sizeof(DOUBLE) * rk_size * dim);
-  DOUBLE *rhs_temp = (DOUBLE *) malloc(sizeof(DOUBLE) * 2 * dim);
-  DOUBLE *xs_delayed_tmp = (DOUBLE *) malloc(sizeof(DOUBLE) * ndelays * dim);
+  ABMD_DOUBLE *rk4_sol = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * rk_size * dim);
+  ABMD_DOUBLE *rk4_rhss = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * rk_size * dim);
+  ABMD_DOUBLE *rhs_temp = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * 2 * dim);
+  ABMD_DOUBLE *xs_delayed_tmp = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * ndelays * dim);
 
   int x_total_delays_len = 0;
   int dx_total_delays_len = 0;
@@ -282,11 +281,11 @@ int abmd_run(ABMD *abm) {
     int delay_idx = idxs == NULL ? i : idxs[i];
     dx_total_delays_len += abm->delayed_idxs_lens[delay_idx];
   }
-  size_t x_delayed_size = x_total_delays_len * sizeof(DOUBLE);
+  size_t x_delayed_size = x_total_delays_len * sizeof(ABMD_DOUBLE);
 
-  DOUBLE *xs_delayed = (DOUBLE *) malloc(x_delayed_size);
-  DOUBLE *xs_delayed_inner = (DOUBLE *) malloc(x_delayed_size);
-  DOUBLE *dxs_delayed = (DOUBLE *) malloc(dx_total_delays_len * sizeof(DOUBLE));
+  ABMD_DOUBLE *xs_delayed = (ABMD_DOUBLE *) malloc(x_delayed_size);
+  ABMD_DOUBLE *xs_delayed_inner = (ABMD_DOUBLE *) malloc(x_delayed_size);
+  ABMD_DOUBLE *dxs_delayed = (ABMD_DOUBLE *) malloc(dx_total_delays_len * sizeof(ABMD_DOUBLE));
 
   int queue_size = abm_order + 1;
   Queue *queue = create_queue(queue_size, dim);
@@ -328,16 +327,16 @@ int abmd_run(ABMD *abm) {
             METHOD_DOPRI8);
   }
 
-  // Computing last RHS
+  // Computing last ABMD_RHS
   int last = rk4_n * dim;
   rhs_rk4(&rk4_sol[last], t0 + rk4_h * rk4_n, &rk4_rhss[last], &abm_data);
 
   // Writing data from RK4 to the queue
   int k = 0;
   for (int i = 0; i < rk4_n + 1; i += RK_STEPS_IN_ABM) {
-    DOUBLE *sol_address = push(queue);
-    memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(DOUBLE));
-    memcpy(&sol_address[dim], &rk4_rhss[i * dim], dim * sizeof(DOUBLE));
+    ABMD_DOUBLE *sol_address = push(queue);
+    memcpy(sol_address, &rk4_sol[i * dim], dim * sizeof(ABMD_DOUBLE));
+    memcpy(&sol_address[dim], &rk4_rhss[i * dim], dim * sizeof(ABMD_DOUBLE));
     SETENV;
     update_diffs(queue);
     swap_diffs(queue);
@@ -347,7 +346,7 @@ int abmd_run(ABMD *abm) {
 
   int run_callback = abm->callback && abm->callback_t;
   double *callback_state = (double *) malloc(sizeof(double) * dim);
-  DOUBLE *callback_state_l = (DOUBLE *) malloc(sizeof(DOUBLE) * dim);
+  ABMD_DOUBLE *callback_state_l = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * dim);
   double *callback_t = abm->callback_t;
 
   SETENV;
@@ -372,12 +371,12 @@ int abmd_run(ABMD *abm) {
     double t = t0 + i * h;
 
     predict(&abm_data);
-    DOUBLE *rhs_out = peek_right_dx(queue);
+    ABMD_DOUBLE *rhs_out = peek_right_dx(queue);
     get_delayed_states(&abm_data, t, 0, xs_delayed, dxs_delayed);
     rhs(peek_right_x(queue), xs_delayed, dxs_delayed, t, rhs_out, &abm_data);
 
     update_diffs(queue);
-    DOUBLE *predicted = peek_right_x(queue);
+    ABMD_DOUBLE *predicted = peek_right_x(queue);
     backup_last_x(queue);
     correct(&abm_data, predicted);
 

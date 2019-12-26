@@ -6,7 +6,7 @@ enum {
   METHOD_RK4 = 2
 };
 
-void rk_step(RHS f, double h, double t, DOUBLE *x, int dim, void *context,
-             DOUBLE *out, DOUBLE *rhs_out, DOUBLE **memory, int method);
+void rk_step(ABMD_RHS f, double h, double t, ABMD_DOUBLE *x, int dim, void *context,
+             ABMD_DOUBLE *out, ABMD_DOUBLE *rhs_out, ABMD_DOUBLE **memory, int method);
 
 #endif
