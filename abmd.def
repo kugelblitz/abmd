@@ -1,0 +1,16 @@
+EXPORTS
+	abmd_create
+	abmd_destroy
+	abmd_run
+	abmd_set_order
+	abmd_set_delays
+	abmd_set_delays_poly_degree
+	abmd_set_pointsave_poly_degree
+	abmd_set_f2
+	abmd_set_context
+	abmd_set_init_call
+	abmd_set_callback 
+	abmd_get_final_state
+	abmd_set_delayed_ranges
+	abmd_set_dx_delays
+	abmd_get_last_error
