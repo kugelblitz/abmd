@@ -4,7 +4,7 @@
 typedef struct _ABMD ABMD;
 
 #ifdef ABMD_USE_LONG_DOUBLE
-typedef long double ABMD_DOULBgE;
+typedef long double ABMD_DOUBLE;
 #else
 typedef double ABMD_DOUBLE;
 #endif
