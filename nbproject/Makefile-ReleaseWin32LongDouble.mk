@@ -68,22 +68,22 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/abmd-longdouble.dll: ${OBJECTFILES}
 ${OBJECTDIR}/src/abmd.o: src/abmd.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abmd.o src/abmd.c
+	$(COMPILE.c) -O3 -Wall -s -DABMD_USE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/abmd.o src/abmd.c
 
 ${OBJECTDIR}/src/api.o: src/api.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/api.o src/api.c
+	$(COMPILE.c) -O3 -Wall -s -DABMD_USE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/api.o src/api.c
 
 ${OBJECTDIR}/src/queue.o: src/queue.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/queue.o src/queue.c
+	$(COMPILE.c) -O3 -Wall -s -DABMD_USE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/queue.o src/queue.c
 
 ${OBJECTDIR}/src/rk.o: src/rk.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
-	$(COMPILE.c) -O3 -Wall -s -DUSE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/rk.o src/rk.c
+	$(COMPILE.c) -O3 -Wall -s -DABMD_USE_LONG_DOUBLE -I. -Isrc -std=c99 -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/rk.o src/rk.c
 
 # Subprojects
 .build-subprojects:

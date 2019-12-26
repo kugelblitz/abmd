@@ -190,7 +190,7 @@
             <pElem>src</pElem>
           </incDir>
           <preprocessorList>
-            <Elem>USE_LONG_DOUBLE</Elem>
+            <Elem>ABMD_USE_LONG_DOUBLE</Elem>
           </preprocessorList>
           <warningLevel>2</warningLevel>
         </cTool>
@@ -243,7 +243,7 @@
             <pElem>src</pElem>
           </incDir>
           <preprocessorList>
-            <Elem>USE_LONG_DOUBLE</Elem>
+            <Elem>ABMD_USE_LONG_DOUBLE</Elem>
           </preprocessorList>
           <warningLevel>2</warningLevel>
         </cTool>
@@ -300,7 +300,7 @@
             <pElem>src</pElem>
           </incDir>
           <preprocessorList>
-            <Elem>USE_LONG_DOUBLE</Elem>
+            <Elem>ABMD_USE_LONG_DOUBLE</Elem>
           </preprocessorList>
           <warningLevel>2</warningLevel>
         </cTool>
@@ -356,7 +356,7 @@
             <pElem>src</pElem>
           </incDir>
           <preprocessorList>
-            <Elem>USE_LONG_DOUBLE</Elem>
+            <Elem>ABMD_USE_LONG_DOUBLE</Elem>
           </preprocessorList>
           <warningLevel>2</warningLevel>
         </cTool>
