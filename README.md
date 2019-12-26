@@ -1,6 +1,6 @@
 # The ABMD Integrator
 
-# About
+## About
 
 This is an implementation of Adams–Bashforth–Moulton multistep integration
 method with support for delay differential equations and advanced differential
@@ -12,7 +12,7 @@ of Delay Differential Equations and Application to the Moon's Orbit”
 by Dan Aksim and Dmitry Pavlov](https://arxiv.org/pdf/1903.02098).
 
 
-# Example
+## Example
 
 A usage example is given in `test/main.c`.
 The equation being integrated is a simplified 2D delay equation of
