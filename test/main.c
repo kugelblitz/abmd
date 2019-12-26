@@ -38,7 +38,7 @@ int callback_back(double *t, double *state, void *context) {
   return 1;
 }
 
-void calc_difference(RHSD f) {
+void calc_difference(ABMD_RHSD f) {
   int order = 11;
 //  double init[] = {-3844e5, 0, 0, 1023 * 3600 * 24};
   double t0 = 0;
@@ -128,17 +128,17 @@ void calc_difference(RHSD f) {
   free(diff);
 }
 
-void orbit(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
-           double t, DOUBLE *out, void *context) {
+void orbit(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], ABMD_DOUBLE dxs_delayed[],
+           double t, ABMD_DOUBLE *out, void *context) {
   int dim = 4;
-  const DOUBLE G = 0.49821740236800005;
+  const ABMD_DOUBLE G = 0.49821740236800005;
   const double m1 = 5.972e24;
   const double m2 = 7.34767309e22;
-  const DOUBLE mu1 = G * m1;
-  const DOUBLE mu2 = G * m2;
-  const DOUBLE q = mu1 + mu2;
-  DOUBLE x_delayed = xs_delayed[0];
-  DOUBLE y_delayed = xs_delayed[1];
+  const ABMD_DOUBLE mu1 = G * m1;
+  const ABMD_DOUBLE mu2 = G * m2;
+  const ABMD_DOUBLE q = mu1 + mu2;
+  ABMD_DOUBLE x_delayed = xs_delayed[0];
+  ABMD_DOUBLE y_delayed = xs_delayed[1];
 
   assert(xs_delayed[0] == xs_delayed[0]);
   assert(xs_delayed[0] == xs_delayed[2]);
@@ -151,18 +151,18 @@ void orbit(DOUBLE x[], DOUBLE xs_delayed[], DOUBLE dxs_delayed[],
   }
 
   for (int i = 0; i < DIM; i += 4) {
-    DOUBLE x_ = x[i];
-    DOUBLE vx = x[i + 1];
-    DOUBLE y = x[i + 2];
-    DOUBLE vy = x[i + 3];
-    DOUBLE r = sqrt(x_ * x_ + y * y);
+    ABMD_DOUBLE x_ = x[i];
+    ABMD_DOUBLE vx = x[i + 1];
+    ABMD_DOUBLE y = x[i + 2];
+    ABMD_DOUBLE vy = x[i + 3];
+    ABMD_DOUBLE r = sqrt(x_ * x_ + y * y);
     out[i] = vx;
     out[i + 1] = -q * x_ / (r * r * r);
     out[i + 2] = vy;
     out[i + 3] = -q * y / (r * r * r);
     const int ae = 6371000;
     const double k2 = 0.335;
-    DOUBLE c =
+    ABMD_DOUBLE c =
             -(3 * k2 * mu2 / (r * r * r)) * (1 + mu2 / mu1) * (pow(ae / r, 5));
     out[i + 1] += c * x_delayed;
     out[i + 3] += c * y_delayed;

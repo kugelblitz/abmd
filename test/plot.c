@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 void plot(char* file, double* data, int dim, int size) {
+#ifndef _WIN32
   FILE *gnuplot = popen("/usr/local/bin/gnuplot", "w");
   fprintf(gnuplot, "set terminal png size 800,600\n");
   fprintf(gnuplot, "set output '%s'\n", file);
@@ -11,4 +12,5 @@ void plot(char* file, double* data, int dim, int size) {
   }
   fprintf(gnuplot, "e\n");
   fflush(gnuplot);
+#endif
 }
