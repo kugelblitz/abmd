@@ -8,13 +8,13 @@ equations.
 
 The algorithm is described in the paper
 [“On the Extension of Adams–Bashforth–Moulton Methods for Numerical Integration
-of Delay Differential Equations and Application to the Moon's Orbit”
-by Dan Aksim and Dmitry Pavlov](https://arxiv.org/pdf/1903.02098).
+of Delay Differential Equations and Application to the Moon's Orbit”]
+by Dan Aksim and Dmitry Pavlov(https://arxiv.org/pdf/1903.02098).
 
 
 ## Example
 
-A usage example is given in `test/main.c`.
+A usage example is given in [test/main.c](test/main.c).
 The equation being integrated is a simplified 2D delay equation of
 lunar motion in Earth's gravity field:
 ```math
