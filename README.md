@@ -8,8 +8,9 @@ equations.
 
 The algorithm is described in the paper
 [“On the Extension of Adams–Bashforth–Moulton Methods for Numerical Integration
-of Delay Differential Equations and Application to the Moon's Orbit”]
-by Dan Aksim and Dmitry Pavlov(https://arxiv.org/pdf/1903.02098).
+of Delay Differential Equations and Application to the Moon's Orbit”](
+https://arxiv.org/pdf/1903.02098)
+by Dan Aksim and Dmitry Pavlov.
 
 
 ## Example
