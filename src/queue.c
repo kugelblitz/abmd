@@ -196,21 +196,29 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
   ABMD_DOUBLE *xs[ABMD_MAX_ORDER + 1];
   
   SETENV;
-  for (int i = 0; i < n_points; i++) {
+  int i;
+  for (i = 0; i < n_points; i++) {
     double tti = t - (q->t0 + (i + left) * q->h);
+    if (tti == 0)
+      break;
     coefs[i] = ws[i] / tti;
     denom += coefs[i];
   }
-  for (int i = 0; i < n_points; i++)
+  if (i != n_points) // got interpolation point #i
   {
-    coefs[i] /= denom;
-    xs[i] = get(q, i + left);
+    memset(coefs, 0, n_points * sizeof(ABMD_DOUBLE));
+    coefs[i] = 1.0;
   }
+  else for (i = 0; i < n_points; i++)
+    coefs[i] /= denom;
+  
+  for (i = 0; i < n_points; i++)
+    xs[i] = get(q, i + left);
 
   if (idxs == NULL) {
     for (int j = 0; j < idxs_len; j++) {
       ABMD_DOUBLE res = 0;
-      for (int i = 0; i < n_points; i++) {
+      for (i = 0; i < n_points; i++) {
         res += coefs[i] * xs[i][j];
       }
       out[j] = res;
@@ -218,7 +226,7 @@ void _evaluate(Queue *q, double t, int *idxs, int idxs_len, int n_points,
   } else {
     for (int j = 0; j < idxs_len; j++) {
       ABMD_DOUBLE res = 0;
-      for (int i = 0; i < n_points; i++) {
+      for (i = 0; i < n_points; i++) {
         res += coefs[i] * xs[i][idxs[j]];
       }
       out[j] = res;
